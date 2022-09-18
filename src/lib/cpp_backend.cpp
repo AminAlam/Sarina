@@ -1,13 +1,23 @@
 #include <iostream>
+#include "ndarray.h"
+#include <cmath>
 
 class DetectOuterBorder{
     public:
-        void detect_border(){
-            std::cout << "Hello 1111" << std::endl;
+        int detect_border(numpyArray<int> array1, numpyArray<int> array2){
+            std::cout << "function 'detect_border' is called" << std::endl;
+            Ndarray<int,2> x_coords(array1);
+            Ndarray<int,2> y_coords(array2);
+            int sum=0;
+            return sum;
         }
 };
 
 extern "C" {
-    DetectOuterBorder* DetectOuterBorder_c(){ return new DetectOuterBorder(); }
-    void DetectOuterBorder_func(DetectOuterBorder* detectOuterBorder){ detectOuterBorder->detect_border(); }
+    DetectOuterBorder* DetectOuterBorder_c(){
+        return new DetectOuterBorder();
+    }
+    int DetectOuterBorder_func(DetectOuterBorder* detectOuterBorder, numpyArray<int> array1, numpyArray<int> array2){ 
+        return detectOuterBorder->detect_border(array1, array2); 
+    }
 };
