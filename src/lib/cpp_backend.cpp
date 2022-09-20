@@ -21,6 +21,8 @@ class DetectOuterBorder{
                     border_y[i] = y_coords[i];
                 }
             }
+
+            
             return *border_x, *border_y;
         }
 };
