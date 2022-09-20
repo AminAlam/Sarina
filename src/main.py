@@ -18,14 +18,15 @@ class DetectOuterBorder(object):
         self.obj = lib_cpp_backend.DetectOuterBorder_c()
 
     def detect_border(self, array1, array2):
-        length = array1.shape[0]
+        border_x = np.empty_like(array1, dtype=np.uint16)
+        border_y = np.empty_like(array2, dtype=np.uint16)
         func = lib_cpp_backend.DetectOuterBorder_func
-        func.restype = ctl.ndpointer(dtype=np.uint16, shape=(length,), flags='aligned, c_contiguous')
-        func.argtypes = [ctypes.c_int, ctl.ndpointer(np.uint16, flags='aligned, c_contiguous'), ctl.ndpointer(np.uint16, flags='aligned, c_contiguous'), ctypes.c_int]
-        out = func(self.obj, array1, array2, array1.shape[0])
-        print(out)
-        out = np.ctypeslib.as_array((ctypes.c_uint16 * length).from_address(ctypes.addressof(out)))
-        return out
+        func.argtypes = [ctypes.c_int, ctl.ndpointer(np.uint16, flags='aligned, c_contiguous'), 
+                        ctl.ndpointer(np.uint16, flags='aligned, c_contiguous'),  
+                        ctypes.c_int, ctl.ndpointer(np.uint16, flags='aligned, c_contiguous'),
+                        ctl.ndpointer(np.uint16, flags='aligned, c_contiguous')]
+        func(self.obj, array1, array2, array1.shape[0], border_x, border_y)
+        return border_x, border_y
 
 if __name__ == "__main__":
 
@@ -46,8 +47,11 @@ if __name__ == "__main__":
     [border_locations_x, border_locations_y] = np.where(image_edges == 255)
     border_locations_x = border_locations_x.astype(np.uint16)
     border_locations_y = border_locations_y.astype(np.uint16)
-    for x,y in zip(border_locations_x, border_locations_y):
-        cv2.circle(rgb_img, (y, x), 1, (0, 0, 255), 1)
+    
     f = DetectOuterBorder()
-    out = f.detect_border(border_locations_x, border_locations_y)
-    print(out)
+    [border_x, border_y] = f.detect_border(border_locations_x, border_locations_y)
+    for x,y in zip(border_x, border_y):
+        cv2.circle(rgb_img, (y, x), 1, (0, 0, 255), 1)
+    cv2.imshow('image', rgb_img)
+    cv2.waitKey(0)
+
