@@ -1,10 +1,10 @@
 import cv2 
 import numpy as np
-from ctypes import cdll
+import numpy.ctypeslib as ctl
+import ctypes
 import sys
 sys.path.append('./src/lib')
-from numpyctypes import c_ndarray
-lib_cpp_backend = cdll.LoadLibrary('./src/lib/lib_cpp_backend.so')
+lib_cpp_backend = ctypes.cdll.LoadLibrary('./src/lib/lib_cpp_backend.so')
 
 # cv2.imshow('image', rgb_img)
 # cv2.imshow('gray_img', gray_img)
@@ -18,7 +18,14 @@ class DetectOuterBorder(object):
         self.obj = lib_cpp_backend.DetectOuterBorder_c()
 
     def detect_border(self, array1, array2):
-        return lib_cpp_backend.DetectOuterBorder_func(self.obj, array1, array2)
+        length = array1.shape[0]
+        func = lib_cpp_backend.DetectOuterBorder_func
+        func.restype = ctl.ndpointer(dtype=np.uint16, shape=(length,), flags='aligned, c_contiguous')
+        func.argtypes = [ctypes.c_int, ctl.ndpointer(np.uint16, flags='aligned, c_contiguous'), ctl.ndpointer(np.uint16, flags='aligned, c_contiguous'), ctypes.c_int]
+        out = func(self.obj, array1, array2, array1.shape[0])
+        print(out)
+        out = np.ctypeslib.as_array((ctypes.c_uint16 * length).from_address(ctypes.addressof(out)))
+        return out
 
 if __name__ == "__main__":
 
@@ -32,16 +39,15 @@ if __name__ == "__main__":
     img_std = np.std(gray_img)
     gray_img[gray_img > img_mean+img_std] = 255
     gray_img[gray_img <= img_mean+img_std] = 0
-
+    
     closing = gray_img
     image_edges = cv2.Canny(closing, 10, 20)
+
     [border_locations_x, border_locations_y] = np.where(image_edges == 255)
+    border_locations_x = border_locations_x.astype(np.uint16)
+    border_locations_y = border_locations_y.astype(np.uint16)
     for x,y in zip(border_locations_x, border_locations_y):
-        # cv2 add circle to image
         cv2.circle(rgb_img, (y, x), 1, (0, 0, 255), 1)
-    image_edges = image_edges*0
-    arg1 = c_ndarray(border_locations_x, dtype=border_locations_x.dtype, ndim = len(border_locations_x.shape), shape = tuple(border_locations_x.shape))
-    arg2 = c_ndarray(border_locations_y, dtype=border_locations_y.dtype, ndim = len(border_locations_y.shape), shape = tuple(border_locations_y.shape))
     f = DetectOuterBorder()
-    out = f.detect_border(arg1, arg2)
+    out = f.detect_border(border_locations_x, border_locations_y)
     print(out)

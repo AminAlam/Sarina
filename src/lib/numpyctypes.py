@@ -16,7 +16,8 @@ ctypesDict = {'d' : C.c_double,
               'Q' : C.c_ulonglong}
               
 
-
+def make_c_ndarray(array):
+    return c_ndarray(array, array.dtype, array.ndim, array.shape)
 
 
 
