@@ -3,6 +3,7 @@ import numpy as np
 import numpy.ctypeslib as ctl
 import ctypes
 import sys
+from tqdm import tqdm
 sys.path.append('./src/lib')
 lib_cpp_backend = ctypes.cdll.LoadLibrary('./src/lib/lib_cpp_backend.so')
 
@@ -50,8 +51,9 @@ if __name__ == "__main__":
     x1 = border_x[1]
     y1 = border_y[1]
     area = 0
-    for i in range(1, border_x.shape[0], 200):
-        for ii in range(i, border_x.shape[0], 2):
+    thresh = border_x.shape[0]* 2/100
+    for i in tqdm(range(1, border_x.shape[0], 1)):
+        for ii in range(i+1, border_x.shape[0], 1):
             x0_tmp = border_x[i]
             y0_tmp = border_y[i]
             x1_tmp = border_x[ii]
@@ -61,27 +63,23 @@ if __name__ == "__main__":
             area_tmp = v_side*h_side
             rgb_img_copy = rgb_img.copy()
             if area_tmp>area:
-                if x0_tmp<x1_tmp:
-                    x_tmp = border_x[(border_x>=x0_tmp) & (border_x<=x1_tmp)]
-                else:
-                    x_tmp = border_x[(border_x>=x1_tmp) & (border_x<=x0_tmp)]
-                if y0_tmp<y1_tmp:
-                    y_tmp = border_y[(border_y>=y0_tmp) & (border_y<=y1_tmp)]
-                else:
-                    y_tmp = border_y[(border_y>=y1_tmp) & (border_y<=y0_tmp)]
-                for j in range(x_tmp.shape[0]):
-                    rgb_img_copy[x_tmp[j], y_tmp[j], :] = [0, 0, 255]
-                if len(x_tmp) + len(y_tmp) < border_x.shape[0]/100:
+                if x0_tmp<x1_tmp and y0_tmp<y1_tmp:
+                    indexes = (border_x>=x0_tmp) & (border_x<=x1_tmp) & (border_y>=y0_tmp) & (border_y<=y1_tmp)
+                elif x0_tmp<x1_tmp and y0_tmp>y1_tmp:
+                    indexes = (border_x>=x0_tmp) & (border_x<=x1_tmp) & (border_y>=y1_tmp) & (border_y<=y0_tmp)
+                elif x0_tmp>x1_tmp and y0_tmp<y1_tmp:
+                    indexes = (border_x>=x1_tmp) & (border_x<=x0_tmp) & (border_y>=y0_tmp) & (border_y<=y1_tmp)
+                elif x0_tmp>x1_tmp and y0_tmp>y1_tmp:
+                    indexes = (border_x>=x1_tmp) & (border_x<=x0_tmp) & (border_y>=y1_tmp) & (border_y<=y0_tmp)
+                x_tmp = border_x[indexes]
+                y_tmp = border_y[indexes]
+                if len(x_tmp) + len(y_tmp) < thresh:
                     x0 = x0_tmp
                     y0 = y0_tmp
                     x1 = x1_tmp
                     y1 = y1_tmp
                     area = area_tmp
-            print(i, ii, x0, y0, x1, y1, area, area_tmp)
-            cv2.rectangle(rgb_img_copy, (y0_tmp, x0_tmp), (y1_tmp, x1_tmp), (0, 255, 0), 3)
-            cv2.rectangle(rgb_img_copy, (y0, x0), (y1, x1), (255, 255, 0), 3)
-            cv2.imshow('image', rgb_img_copy)
-            cv2.waitKey(1)
+    print(i, ii, x0, y0, x1, y1, area)
 
     for x,y in zip(border_x, border_y):
         cv2.circle(rgb_img, (y, x), 1, (0, 0, 255), 1)
