@@ -1,3 +1,4 @@
+from traceback import print_tb
 import cv2 
 import numpy as np
 import numpy.ctypeslib as ctl
@@ -21,20 +22,16 @@ class DetectOuterBorder(object):
                         ctl.ndpointer(np.uint16, flags='aligned, c_contiguous')]
         func(self.obj, array1, array2, array1.shape[0], border_x, border_y)
         return border_x, border_y
-counter = 0 
 
 
-def detect_rects(border_x, border_y, x0, y0, x1, y1, rects_x_points=[], rects_y_points=[]):
+def detect_rects(border_x, border_y, x0, y0, x1, y1, rgb_img):
     print('Detecting rectangles...')
-    global counter
-    counter = counter+1
-
-    if counter>2:
-        return [[0, 0, 0, 0]]
-
+    point_a_indx = 0
+    point_b_indx = 0
     rects = []
     area = 0
-    thresh = border_x.shape[0]* 2/100
+    
+    thresh = 10
     print('thresh', thresh)
     if len(border_x) > 2000:
         step = 100
@@ -44,8 +41,6 @@ def detect_rects(border_x, border_y, x0, y0, x1, y1, rects_x_points=[], rects_y_
         step = 10
     else:
         step = 1
-    border_x = np.append(border_x, rects_x_points)
-    border_y = np.append(border_y, rects_y_points)
     for i in range(1, border_x.shape[0], step):
         for ii in range(i+1, border_x.shape[0], step):
             x0_tmp = border_x[i]
@@ -71,64 +66,51 @@ def detect_rects(border_x, border_y, x0, y0, x1, y1, rects_x_points=[], rects_y_
                     y0 = y0_tmp
                     x1 = x1_tmp
                     y1 = y1_tmp
+                    point_a_indx = i
+                    point_b_indx = ii
                     area = area_tmp
-                    print(counter, x0, y0, x1, y1, area)
+                    print(x0, y0, x1, y1, area)
     rects.append([x0, y0, x1, y1])
-    if x0<=x1 and y0<=y1:
-        x_small = x0
-        x_big = x1
-        y_small = y0
-        y_big = y1
-    elif x0<=x1 and y0>y1:
-        x_small = x0
-        x_big = x1
-        y_small = y1
-        y_big = y0
-    elif x0>x1 and y0<=y1:
-        x_small = x1
-        x_big = x0
-        y_small = y0
-        y_big = y1
-    elif x0>x1 and y0>y1:
-        x_small = x1
-        x_big = x0
-        y_small = y1
-        y_big = y0
+    print(point_a_indx, point_b_indx)
+    if point_a_indx < point_b_indx:
+        sec1_indexes = list(range(point_a_indx, point_b_indx))
+        border_x_sec1 = border_x[sec1_indexes]
+        border_y_sec1 = border_y[sec1_indexes]
+        sec2_indexes = list(range(point_b_indx, border_x.shape[0]))
+        sec2_indexes.extend(range(0, point_a_indx))
+        border_x_sec2 = border_x[sec2_indexes]
+        border_y_sec2 = border_y[sec2_indexes]
+    else:
+        sec1_indexes = list(range(point_b_indx, point_a_indx))
+        border_x_sec1 = border_x[sec1_indexes]
+        border_y_sec1 = border_y[sec1_indexes]
+        sec2_indexes = list(range(point_a_indx, border_x.shape[0]))
+        sec2_indexes.extend(range(0, point_b_indx))
+        border_x_sec2 = border_x[sec2_indexes]
+        border_y_sec2 = border_y[sec2_indexes]
+
+    if x0<x1 and y0<y1:
+        border_x_sec1 = np.append(border_x_sec1, np.arange(x0, x1))
+        border_y_sec1 = np.append(border_y_sec1, np.full_like(np.arange(x0, x1), y1))
+        border_y_sec1 = np.append(border_y_sec1, np.arange(y0, y1))
+        border_x_sec1 = np.append(border_x_sec1, np.full_like(np.arange(y0, y1), x0))
+    elif x0<x1 and y0>y1:
+        border_y_sec1 = np.append(border_y_sec1, np.arange(y1, y0))
+        border_x_sec1 = np.append(border_x_sec1, np.full_like(np.arange(y1, y0), x1))
+        border_x_sec1 = np.append(border_x_sec1, np.arange(x0, x1))
+        border_y_sec1 = np.append(border_y_sec1, np.full_like(np.arange(x0, x1), y0))
+    elif x0>x1 and y0<y1:
+        
+
     
-    horizontal_top_y = np.arange(y_small, y_big, 1)
-    horizontal_top_x = np.full_like(horizontal_top_y, x_small)
-
-    horizontal_bottom_y = np.arange(y_small, y_big, 1)
-    horizontal_bottom_x = np.full_like(horizontal_bottom_y, x_big)
-
-    vertical_left_x = np.arange(x_small, x_big, 1)
-    vertical_left_y = np.full_like(vertical_left_x, y_small)
-
-    vertical_right_x = np.arange(x_small, x_big, 1)
-    vertical_right_y = np.full_like(vertical_right_x, y_big)
-
-    border_x = np.append(border_x, horizontal_bottom_x)
-    border_y = np.append(border_y, horizontal_bottom_y)
-    border_x = np.append(border_x, horizontal_top_x)
-    border_y = np.append(border_y, horizontal_top_y)
-    border_x = np.append(border_x, vertical_left_x)
-    border_y = np.append(border_y, vertical_left_y)
-    border_x = np.append(border_x, vertical_right_x)
-    border_y = np.append(border_y, vertical_right_y)
-    for i in range(len(vertical_left_x)):
-        x = vertical_left_x[i]
-        y = vertical_left_y[i]
-        rect_points_y = np.arange(y, y_big)
-        rect_points_x = np.full_like(rect_points_y, x)
-        rects_x_points.append(rect_points_x)
-        rects_y_points.append(rect_points_y)
-
-    border_x = border_x.astype(np.uint16)
-    border_y = border_y.astype(np.uint16)
-
-
-    rects.extend(detect_rects(border_x, border_y, border_x[0], border_y[0], border_x[1], border_y[1], rects_x_points, rects_y_points))
     
+
+    cv2.rectangle(rgb_img, (x0, y0), (x1, y1), (0, 255, 0), 2)
+
+    for x,y in zip(border_x_sec1, border_y_sec1):
+        cv2.circle(rgb_img, (x, y), 1, (255, 255, 0), 1)
+        cv2.imshow('rgb_img', rgb_img)
+        cv2.waitKey(1)    
     return rects
 
 if __name__ == "__main__":
@@ -137,34 +119,16 @@ if __name__ == "__main__":
     rgb_img = cv2.imread(img_file)
 
     gray_img = cv2.cvtColor(rgb_img, cv2.COLOR_BGR2GRAY)
-    heigth, width = gray_img.shape
-    gray_img = 255 - gray_img
-    img_mean = np.mean(gray_img)
-    img_std = np.std(gray_img)
-    gray_img[gray_img > img_mean+img_std] = 255
-    gray_img[gray_img <= img_mean+img_std] = 0
-    
-    closing = gray_img
-    image_edges = cv2.Canny(closing, 10, 20)
-
-    [border_locations_x, border_locations_y] = np.where(image_edges == 255)
-    border_locations_x = border_locations_x.astype(np.uint16)
-    border_locations_y = border_locations_y.astype(np.uint16)
-
-    f = DetectOuterBorder()
-    [border_x, border_y] = f.detect_border(border_locations_x, border_locations_y)
-    border_x = border_x[border_x != 0]
-    border_y = border_y[border_y != 0]
-    
-    x0 = border_x[0]
-    y0 = border_y[0]
-    x1 = border_x[1]
-    y1 = border_y[1]
-    rects = detect_rects(border_x, border_y, x0, y0, x1, y1)
+    ret, thresh = cv2.threshold(gray_img, 100, 255, cv2.THRESH_BINARY)
+    contours, hierarchy = cv2.findContours(image=thresh, mode=cv2.RETR_TREE, method=cv2.CHAIN_APPROX_NONE)
+    contours = contours[1]
+    border_locations_x = [i[0][0] for i in contours]
+    border_locations_y = [i[0][1] for i in contours]
+    border_locations_x = np.array(border_locations_x, dtype=np.uint16)
+    border_locations_y = np.array(border_locations_y, dtype=np.uint16)
+    x0 = border_locations_x[0]
+    y0 = border_locations_y[0]
+    x1 = border_locations_x[1]
+    y1 = border_locations_y[1]
+    rects = detect_rects(border_locations_x, border_locations_y, x0, y0, x1, y1, rgb_img)
     print(rects)
-    for rect in rects:
-        rect = [int(i) for i in rect]
-        cv2.rectangle(rgb_img, (rect[1], rect[0]), (rect[3], rect[2]), (0, 0, 255), 1)
-    cv2.imshow('image', rgb_img)
-    cv2.waitKey(0)
-
