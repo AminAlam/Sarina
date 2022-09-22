@@ -28,6 +28,10 @@ def detect_rects(border_x, border_y, x0, y0, x1, y1, rects_x_points=[], rects_y_
     print('Detecting rectangles...')
     global counter
     counter = counter+1
+
+    if counter>2:
+        return [[0, 0, 0, 0]]
+
     rects = []
     area = 0
     thresh = border_x.shape[0]* 2/100
@@ -121,10 +125,9 @@ def detect_rects(border_x, border_y, x0, y0, x1, y1, rects_x_points=[], rects_y_
 
     border_x = border_x.astype(np.uint16)
     border_y = border_y.astype(np.uint16)
-    if counter>1:
-        return []
-    else:
-        rects.append(detect_rects(border_x, border_y, border_x[0], border_y[0], border_x[1], border_y[1], rects_x_points, rects_y_points))
+
+
+    rects.extend(detect_rects(border_x, border_y, border_x[0], border_y[0], border_x[1], border_y[1], rects_x_points, rects_y_points))
     
     return rects
 
@@ -158,7 +161,9 @@ if __name__ == "__main__":
     x1 = border_x[1]
     y1 = border_y[1]
     rects = detect_rects(border_x, border_y, x0, y0, x1, y1)
+    print(rects)
     for rect in rects:
+        rect = [int(i) for i in rect]
         cv2.rectangle(rgb_img, (rect[1], rect[0]), (rect[3], rect[2]), (0, 0, 255), 1)
     cv2.imshow('image', rgb_img)
     cv2.waitKey(0)
