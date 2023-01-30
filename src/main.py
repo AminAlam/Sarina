@@ -5,6 +5,8 @@ import numpy.ctypeslib as ctl
 import ctypes
 import sys
 from tqdm import tqdm
+import random
+
 sys.path.append('./src/lib')
 lib_cpp_backend = ctypes.cdll.LoadLibrary('./src/lib/lib_cpp_backend.so')
 
@@ -24,201 +26,89 @@ class DetectOuterBorder(object):
         return border_x, border_y
 
 
-def detect_rects(border_x, border_y, x0, y0, x1, y1, rgb_img=None):
-    print('Detecting rectangles...')
+def extract_text(file_path):
+    with open(file_path, 'rb') as f:
+        lines = f.readlines()
+        lines = [line.decode('utf-8') for line in lines]
+    weights = [line.split(' ')[-1] for line in lines]
+    # remove any character that is not a number from weights
+    weights = [float(''.join([char for char in weight if char.isdigit() or char == '.'])) for weight in weights]
+    lines = [' '.join(line.split(' ')[:-1]) for line in lines]
+    # remove the last tabs and new lines
+    lines = [line.strip() for line in lines]
+    return lines, weights
 
-    rgb_img_copy = rgb_img.copy()
-    for x,y in zip(border_x, border_y):
-        cv2.circle(rgb_img_copy, (x,y), 1, (0,0,255), 2)
-
-    point_a_indx = 0
-    point_b_indx = 0
-    rects = []
-    area = 0
-    
-    thresh = len(border_x)/100
-    if thresh<10:
-        thresh = 10
-    print('thresh', thresh)
-    if len(border_x) > 2000:
-        step = 100
-    elif len(border_x) > 1000:
-        step = 50
-    elif len(border_x) > 500:
-        step = 10
-    else:
-        step = 1
-    for i in range(1, border_x.shape[0], step):
-        for ii in range(i+1, border_x.shape[0], step):
-            x0_tmp = border_x[i]
-            y0_tmp = border_y[i]
-            x1_tmp = border_x[ii]
-            y1_tmp = border_y[ii]
-            h_side = np.abs(float(y1_tmp) - float(y0_tmp))
-            v_side = np.abs(float(x1_tmp) - float(x0_tmp))
-            area_tmp = v_side*h_side
-            if area_tmp>area and (h_side<2*v_side or v_side<2*h_side):
-                if x0_tmp<x1_tmp and y0_tmp<y1_tmp:
-                    indexes = (border_x>=x0_tmp) & (border_x<=x1_tmp) & (border_y>=y0_tmp) & (border_y<=y1_tmp)
-                elif x0_tmp<x1_tmp and y0_tmp>y1_tmp:
-                    indexes = (border_x>=x0_tmp) & (border_x<=x1_tmp) & (border_y>=y1_tmp) & (border_y<=y0_tmp)
-                elif x0_tmp>x1_tmp and y0_tmp<y1_tmp:
-                    indexes = (border_x>=x1_tmp) & (border_x<=x0_tmp) & (border_y>=y0_tmp) & (border_y<=y1_tmp)
-                elif x0_tmp>x1_tmp and y0_tmp>y1_tmp:
-                    indexes = (border_x>=x1_tmp) & (border_x<=x0_tmp) & (border_y>=y1_tmp) & (border_y<=y0_tmp)
-                x_tmp = border_x[indexes]
-                y_tmp = border_y[indexes]
-                if len(x_tmp) + len(y_tmp) < thresh:
-                    x0 = x0_tmp
-                    y0 = y0_tmp
-                    x1 = x1_tmp
-                    y1 = y1_tmp
-                    point_a_indx = i
-                    point_b_indx = ii
-                    area = area_tmp
-    if area<rgb_img.shape[0]*rgb_img.shape[1]/10000:
-        return [[0, 0, 0, 0]]
-
-    rects.append([x0, y0, x1, y1])
-    # cv2.rectangle(rgb_img_copy, (x0, y0), (x1, y1), (0,255,0), 2)
-    # cv2.imshow('rgb_img', rgb_img_copy)
-    # cv2.waitKey(1)
-    if point_a_indx < point_b_indx:
-        sec1_indexes = list(range(point_a_indx, point_b_indx))
-        border_x_sec1 = border_x[sec1_indexes]
-        border_y_sec1 = border_y[sec1_indexes]
-        sec2_indexes = list(range(point_b_indx, border_x.shape[0]))
-        sec2_indexes.extend(range(0, point_a_indx))
-        border_x_sec2 = border_x[sec2_indexes]
-        border_y_sec2 = border_y[sec2_indexes]
-    else:
-        sec1_indexes = list(range(point_b_indx, point_a_indx))
-        border_x_sec1 = border_x[sec1_indexes]
-        border_y_sec1 = border_y[sec1_indexes]
-        sec2_indexes = list(range(point_a_indx, border_x.shape[0]))
-        sec2_indexes.extend(range(0, point_b_indx))
-        border_x_sec2 = border_x[sec2_indexes]
-        border_y_sec2 = border_y[sec2_indexes]
-
-    if x0<x1 and y0<y1:
-        if point_a_indx < point_b_indx:
-            border_x_sec1 = np.append(border_x_sec1, np.arange(x0, x1))
-            border_y_sec1 = np.append(border_y_sec1, np.full_like(np.arange(x0, x1), y0))
-            border_y_sec1 = np.append(border_y_sec1, np.arange(y0, y1))
-            border_x_sec1 = np.append(border_x_sec1, np.full_like(np.arange(y0, y1), x1))
-
-            border_x_sec2 = np.append(border_x_sec2, np.arange(x0, x1))
-            border_y_sec2 = np.append(border_y_sec2, np.full_like(np.arange(x0, x1), y1))
-            border_y_sec2 = np.append(border_y_sec2, np.arange(y0, y1))
-            border_x_sec2 = np.append(border_x_sec2, np.full_like(np.arange(y0, y1), x0))
-        else:
-            border_x_sec2 = np.append(border_x_sec2, np.arange(x0, x1))
-            border_y_sec2 = np.append(border_y_sec2, np.full_like(np.arange(x0, x1), y0))
-            border_y_sec2 = np.append(border_y_sec2, np.arange(y0, y1))
-            border_x_sec2 = np.append(border_x_sec2, np.full_like(np.arange(y0, y1), x1))
-
-            border_x_sec1 = np.append(border_x_sec1, np.arange(x0, x1))
-            border_y_sec1 = np.append(border_y_sec1, np.full_like(np.arange(x0, x1), y1))
-            border_y_sec1 = np.append(border_y_sec1, np.arange(y0, y1))
-            border_x_sec1 = np.append(border_x_sec1, np.full_like(np.arange(y0, y1), x0))
-    elif x0>x1 and y0<y1:
-        if point_a_indx < point_b_indx:
-            border_y_sec1 = np.append(border_y_sec1, np.arange(y0, y1))
-            border_x_sec1 = np.append(border_x_sec1, np.full_like(np.arange(y0, y1), x0))
-            border_x_sec1 = np.append(border_x_sec1, np.arange(x1, x0))
-            border_y_sec1 = np.append(border_y_sec1, np.full_like(np.arange(x1, x0), y1))
-
-            border_y_sec2 = np.append(border_y_sec2, np.arange(y0, y1))
-            border_x_sec2 = np.append(border_x_sec2, np.full_like(np.arange(y0, y1), x1))
-            border_x_sec2 = np.append(border_x_sec2, np.arange(x1, x0))
-            border_y_sec2 = np.append(border_y_sec2, np.full_like(np.arange(x1, x0), y0))
-        else:
-            border_y_sec2 = np.append(border_y_sec2, np.arange(y0, y1))
-            border_x_sec2 = np.append(border_x_sec2, np.full_like(np.arange(y0, y1), x0))
-            border_x_sec2 = np.append(border_x_sec2, np.arange(x1, x0))
-            border_y_sec2 = np.append(border_y_sec2, np.full_like(np.arange(x1, x0), y1))
-
-            border_y_sec1 = np.append(border_y_sec1, np.arange(y0, y1))
-            border_x_sec1 = np.append(border_x_sec1, np.full_like(np.arange(y0, y1), x1))
-            border_x_sec1 = np.append(border_x_sec1, np.arange(x1, x0))
-            border_y_sec1 = np.append(border_y_sec1, np.full_like(np.arange(x1, x0), y0))
-    elif x0>x1 and y0>y1:
-        if point_a_indx < point_b_indx:
-            border_x_sec1 = np.append(border_x_sec1, np.arange(x1, x0))
-            border_y_sec1 = np.append(border_y_sec1, np.full_like(np.arange(x1, x0), y1))
-            border_y_sec1 = np.append(border_y_sec1, np.arange(y1, y0))
-            border_x_sec1 = np.append(border_x_sec1, np.full_like(np.arange(y1, y0), x0))
-
-            border_x_sec2 = np.append(border_x_sec2, np.arange(x1, x0))
-            border_y_sec2 = np.append(border_y_sec2, np.full_like(np.arange(x1, x0), y0))
-            border_y_sec2 = np.append(border_y_sec2, np.arange(y1, y0))
-            border_x_sec2 = np.append(border_x_sec2, np.full_like(np.arange(y1, y0), x1))
-        else:
-            border_x_sec2 = np.append(border_x_sec2, np.arange(x1, x0))
-            border_y_sec2 = np.append(border_y_sec2, np.full_like(np.arange(x1, x0), y1))
-            border_y_sec2 = np.append(border_y_sec2, np.arange(y1, y0))
-            border_x_sec2 = np.append(border_x_sec2, np.full_like(np.arange(y1, y0), x0))
-
-            border_x_sec1 = np.append(border_x_sec1, np.arange(x1, x0))
-            border_y_sec1 = np.append(border_y_sec1, np.full_like(np.arange(x1, x0), y0))
-            border_y_sec1 = np.append(border_y_sec1, np.arange(y1, y0))
-            border_x_sec1 = np.append(border_x_sec1, np.full_like(np.arange(y1, y0), x1))
-    elif x0<x1 and y0>y1:
-        if point_a_indx < point_b_indx:
-            border_y_sec1 = np.append(border_y_sec1, np.arange(y1, y0))
-            border_x_sec1 = np.append(border_x_sec1, np.full_like(np.arange(y1, y0), x0))
-            border_x_sec1 = np.append(border_x_sec1, np.arange(x0, x1))
-            border_y_sec1 = np.append(border_y_sec1, np.full_like(np.arange(x0, x1), y0))
-
-            border_y_sec2 = np.append(border_y_sec2, np.arange(y1, y0))
-            border_x_sec2 = np.append(border_x_sec2, np.full_like(np.arange(y1, y0), x1))
-            border_x_sec2 = np.append(border_x_sec2, np.arange(x0, x1))
-            border_y_sec2 = np.append(border_y_sec2, np.full_like(np.arange(x0, x1), y1))
-        else:
-            border_y_sec2 = np.append(border_y_sec2, np.arange(y1, y0))
-            border_x_sec2 = np.append(border_x_sec2, np.full_like(np.arange(y1, y0), x0))
-            border_x_sec2 = np.append(border_x_sec2, np.arange(x0, x1))
-            border_y_sec2 = np.append(border_y_sec2, np.full_like(np.arange(x0, x1), y0))
-
-            border_y_sec1 = np.append(border_y_sec1, np.arange(y1, y0))
-            border_x_sec1 = np.append(border_x_sec1, np.full_like(np.arange(y1, y0), x1))
-            border_x_sec1 = np.append(border_x_sec1, np.arange(x0, x1))
-            border_y_sec1 = np.append(border_y_sec1, np.full_like(np.arange(x0, x1), y1))
-    # section1
-    if len(border_x_sec1) > 2+thresh:
-        rects1 = detect_rects(border_x_sec1, border_y_sec1, border_x_sec1[0], border_y_sec1[0], border_x_sec1[1], border_y_sec1[1], rgb_img)
-        rects.extend(rects1)
-    # section2
-    if len(border_x_sec2) > 2+thresh:
-        rects2 = detect_rects(border_x_sec2, border_y_sec2, border_x_sec2[0], border_y_sec2[0], border_x_sec2[1], border_y_sec2[1], rgb_img)
-        rects.extend(rects2)
-
-    return rects
 
 if __name__ == "__main__":
-
+    txt_file = 'assets/texts/merged.txt'
     img_file = 'assets/images/iran_map.png'
     rgb_img = cv2.imread(img_file)
-
+    text, weights = extract_text(txt_file)
     gray_img = cv2.cvtColor(rgb_img, cv2.COLOR_BGR2GRAY)
     ret, thresh = cv2.threshold(gray_img, 100, 255, cv2.THRESH_BINARY)
     contours, hierarchy = cv2.findContours(image=thresh, mode=cv2.RETR_TREE, method=cv2.CHAIN_APPROX_NONE)
-    contours = contours[1]
-    border_locations_x = [i[0][0] for i in contours]
-    border_locations_y = [i[0][1] for i in contours]
-    border_locations_x = np.array(border_locations_x, dtype=np.uint16)
-    border_locations_y = np.array(border_locations_y, dtype=np.uint16)
-    x0 = border_locations_x[0]
-    y0 = border_locations_y[0]
-    x1 = border_locations_x[1]
-    y1 = border_locations_y[1]
-    rects = detect_rects(border_locations_x, border_locations_y, x0, y0, x1, y1, rgb_img)
+    contour = contours[1]
+    contour = contour * 2
+    x_rect, y_rect, w_rect, h_rect = cv2.boundingRect(contour)
 
-    for rect in rects:
-        # random rgb color
-        color = (np.random.randint(0, 256), np.random.randint(0, 256), np.random.randint(0, 256))
-        cv2.rectangle(rgb_img, (rect[0], rect[1]), (rect[2], rect[3]), color, 2)
+    
 
-    cv2.imshow('img', rgb_img)
-    cv2.waitKey(0)
-    print(rects)
+    contour[:, :, 0] -= x_rect
+    contour[:, :, 1] -= y_rect
+    rgb_img = np.zeros((h_rect, w_rect, 3), dtype=np.uint8)
+
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    fontScale = 0.15
+    color = (255, 0, 255)
+    thickness = 2
+    txt_info = []
+    rectangles = []
+    S_bounding_rect = w_rect * h_rect
+    S_total_txt = 0
+    for indx, txt in enumerate(text):
+        (w, h), _ = cv2.getTextSize(txt, font, int(fontScale*weights[indx]), thickness)
+        S_total_txt += w * h * weights[indx]
+        txt_info.append([w, h, indx, txt, weights[indx]])
+        rectangles.append([w, h])
+    txt_info.sort(key=lambda x: x[-1], reverse=True)
+    C_ratio = S_bounding_rect / S_total_txt
+
+    epsilon = 0.002 * cv2.arcLength(contour, True)
+    contour = cv2.approxPolyDP(contour, epsilon, True)
+    cv2.drawContours(rgb_img, [contour], 0, (0, 255, 0), 1)
+
+    # find center of contour
+    M = cv2.moments(contour)
+    cx = int(M['m10']/M['m00'])
+    cy = int(M['m01']/M['m00'])
+    min_x = contour[:, :, 0].min()
+    max_x = contour[:, :, 0].max()
+    min_y = contour[:, :, 1].min()
+    max_y = contour[:, :, 1].max()
+    cv2.circle(rgb_img, (cx, cy), 5, (0, 0, 255), -1)
+    filled_area = np.zeros((h_rect, w_rect), dtype=np.uint8)
+    # put the contour on the filled area
+    cv2.drawContours(filled_area, [contour], 0, (255, 255, 255), -1)
+    filled_area = (filled_area / 255 - 1)*-1
+
+    # put text in txt_info in the contour center
+    for txt in txt_info:
+        w, h, indx, txt, weight = txt
+        # get a random point in the contour
+        while True:
+            x = random.randint(min_x, max_x)
+            y = random.randint(min_y, max_y)
+            if filled_area[y:y+h, x:x+w].sum() == 0:
+                break
+
+        
+        cv2.putText(rgb_img, txt, (x, y+h), font, int(fontScale*weight), color, thickness, cv2.LINE_AA)
+        cv2.rectangle(rgb_img, (x, y), (x+w, y+h), (0, 0, 255), 1)
+        filled_area[y:y+h, x:x+w] = 1
+
+        cv2.imshow('filled_area', filled_area)
+    
+        cv2.imshow('rgb_img', rgb_img)
+        cv2.waitKey(0)
+
+    
