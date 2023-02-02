@@ -1,56 +1,133 @@
-Mahsa	     1
-Nika	     2
-Neda	     3
-Navid	     4
-Mahsa	     5
-Nika	     6
-Neda	     7
-Navid	     8
-Mahsa	     9
-Nika	    10
-Neda	    11
-Navid	    12
-Mahsa	    13
-Nika	    14
-Neda	    15
-Navid	    16
-Mahsa	    17
-Nika	    18
-Neda	    19
-Navid	    20
-Mahsa	    21
-Nika	    22
-Neda	    23
-Navid	    24
-Mahsa	    25
-Nika	    26
-Neda	    27
-Navid	    28
-Mahsa	    29
-Nika	    30
-Neda	    31
-Navid	    32
-Mahsa	    33
-Nika	    34
-Neda	    35
-Navid	    36
-Mahsa	    37
-Nika	    38
-Neda	    39
-Navid	    40
-Mahsa	    41
-Nika	    42
-Neda	    43
-Navid	    44
-Mahsa	    45
-Nika	    46
-Neda	    47
-Navid	    48
-Mahsa	    49
-Nika	    50
-Neda	    51
-Navid	    52
-Mahsa	    53
-Nika	    54
-Neda	    55
-Navid	    56
+Sarina|220
+Mahsa|180
+Nika|140
+Hadis|110
+Navid|140
+Mehrshad|130
+Khodanoor|130
+Kian|130
+MohammadMehdi|80
+Ayoub|40
+Nima|60
+Maeede|40
+Mahdi|30
+MohammadHasan|50
+Hajar|30
+Freydoun|30
+Reza|30
+Fardin|30
+MajidReza|100
+Mohsen|100
+SeyedMohammad|100
+Arash|60
+Pouneh|60
+Rira|70
+Ramin|30
+Hamed|30
+Fatemeh|30
+Arshia|30
+Shahzad|40
+Saba|30
+Sara|25
+Kiana|30
+Parisa|70
+Neda|80
+Mohammad|60
+Rohollah|50
+Amin|30
+Abolfazl|30
+Shademan|30
+Behnaz|30
+Mehran|30
+Sadra|30
+HamidReza|50
+Ghazaleh|30
+Nikta|40
+Amirhussein|30
+Aylar|50
+Freshteh|30
+Hananeh|30
+Negin|30
+Mostafa|30
+AliReza|30
+Sohrab|30
+Yalda|40
+Farhad|35
+Asra|40
+Shaho|30
+Ali|50
+Shahryar|30
+Erfan|30
+Javad|30
+Mona|30
+Karvan|30
+Borhan|30
+Tomaj|60
+Nasrin|40
+Hossein|40
+Jafar|50
+Pejhman|40
+Sattar|70
+Vahid|40
+Etika|30
+Ghadin|30
+Donya|30
+Saeed|40
+AbbasAli|30
+Hamid|30
+Majid|50
+Hasti|60
+AmirArshad|40
+Jadi|50
+komar|40
+Siavash|40
+AmirJavad|30
+Bahar|30
+Armita|50
+Behnam|60
+Asieh|40
+Mahak|35
+Baktash|50
+MohammadReza|30
+Ashkan|30
+Golshifteh|30
+Taraneh|30
+Katayoun|50
+Ebrahim|30
+Asef|30
+Elham|30
+Atabak|30
+Dana|30
+Donya|30
+Sepehr|30
+Gohar|50
+Rosita|30
+Saman|30
+Salar|30
+Shahrokh|30
+Omar|30
+Younes|30
+Voria|30
+Akbar|30
+Daniel|30
+Sahar|30
+Shiva|40
+Mahan|30
+Naeem|30
+Yasin|30
+Yaser|30
+Aida|30
+Esmaeel|30
+Jalil|30
+Danesh|30
+Roz|30
+Shima|30
+Loghman|30
+Keyvan|30
+Mehdi|30
+Mojtaba|30
+Milad|30
+Narges|30
+Hengameh|40
+Haleh|30
+Hami|30

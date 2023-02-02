@@ -30,10 +30,9 @@ def extract_text(file_path):
     with open(file_path, 'rb') as f:
         lines = f.readlines()
         lines = [line.decode('utf-8') for line in lines]
-    weights = [line.split(' ')[-1] for line in lines]
-    # remove any character that is not a number from weights
-    weights = [float(''.join([char for char in weight if char.isdigit() or char == '.'])) for weight in weights]
-    lines = [' '.join(line.split(' ')[:-1]) for line in lines]
+    confs = [line.split('|')[-1] for line in lines]    
+    weights = [float(''.join([char for char in conf if char.isdigit() or char == '.'])) for conf in confs]
+    lines = ['|'.join(line.split('|')[:-1]) for line in lines]
     # remove the last tabs and new lines
     lines = [line.strip() for line in lines]
     return lines, weights
@@ -54,12 +53,11 @@ if __name__ == "__main__":
 
     contour[:, :, 0] -= x_rect
     contour[:, :, 1] -= y_rect
-    rgb_img = np.zeros((h_rect, w_rect, 3), dtype=np.uint8)
+    rgb_img = np.ones((h_rect, w_rect, 3), dtype=np.uint8)*255
 
-    font = cv2.QT_FONT_BLACK
+    font = cv2.FONT_HERSHEY_TRIPLEX
     fontScale = 0.15
-    color = (255, 0, 255)
-    thickness = 2
+    thickness = 10
     txt_info = []
     # get area of the contour 
 
@@ -75,15 +73,12 @@ if __name__ == "__main__":
     # epsilon = 0.002 * cv2.arcLength(contour, True)
     # contour = cv2.approxPolyDP(contour, epsilon, True)
     
-    contour = contour * int(1/C_ratio**0.5)
+    contour = contour * 1/C_ratio**0.5
     contour = contour.astype(np.int32)
     x_rect, y_rect, w_rect, h_rect = cv2.boundingRect(contour)
 
-    print(cv2.contourArea(contour)/S_total_txt)
     # resize rgb_img 
     rgb_img = cv2.resize(rgb_img, (contour[:, :, 0].max(), contour[:, :, 1].max()))
-    rgb_img_tmp = rgb_img.copy()
-    cv2.drawContours(rgb_img, [contour], 0, (0, 255, 0), 1)
 
 
     # find center of contour
@@ -94,42 +89,50 @@ if __name__ == "__main__":
     max_x = contour[:, :, 0].max()
     min_y = contour[:, :, 1].min()
     max_y = contour[:, :, 1].max()
-    cv2.circle(rgb_img, (cx, cy), 5, (0, 0, 255), -1)
     filled_area = np.zeros((h_rect, w_rect), dtype=np.uint8)
     cv2.drawContours(filled_area, [contour], 0, (255, 255, 255), -1)
+
     filled_area = (filled_area / 255 - 1)*-1
-    decay_rate = 0.9
+    decay_rate = 0.95
+    max_weight = np.max(weights)
     # put text in txt_info in the contour center
-    for txt in txt_info:
+    for txt in tqdm(txt_info):
         fontScale_tmp = fontScale
         w, h, indx, txt, weight = txt
         # get a random point in the contour
         counter = 0
         while True:
-            x = random.randint(min_x, max_x)
-            y = random.randint(min_y, max_y)
-            if filled_area[y:y+h, x:x+w].sum() == 0:
+            x = random.randint(min_x+20, max_x-20)
+            y = random.randint(min_y+20, max_y-20)            
+            if filled_area[y-18:y+h+18, x-18:x+w+18].sum() == 0:
                 break            
-            if counter > 1000:
+            if counter == 200:
                 fontScale_tmp = fontScale_tmp * decay_rate
                 (w, h), _ = cv2.getTextSize(txt, font, int(fontScale_tmp*weight), thickness)
                 counter = 0
             counter += 1
 
-        
-        cv2.putText(rgb_img, txt, (x, y+h), font, int(fontScale_tmp*weight), color, thickness, cv2.LINE_AA)
-        cv2.rectangle(rgb_img, (x, y), (x+w, y+h), (0, 0, 255), 1)
-        cv2.putText(filled_area, txt, (x, y+h), font, int(fontScale_tmp*weight), color, thickness, cv2.LINE_AA)
+        alpha = 0.5*(1+weight/max_weight)
+        # put text in the image with alpha 0.5
+        color = (0,0,0)
+        if txt == 'Sarina':
+            color = (0,0,255)
+            thickness = 20
+        else:
+            thickness = 10
+        overlay = rgb_img.copy()
+        cv2.putText(overlay, txt, (x, y+h), font, int(fontScale_tmp*weight), color, thickness, cv2.LINE_AA)
+        rgb_img = cv2.addWeighted(overlay, alpha, rgb_img, 1 - alpha, 0)
+
+        cv2.putText(filled_area, txt, (x, y+h), font, int(fontScale_tmp*weight), [255, 255, 255], thickness, cv2.LINE_AA)
         # filled_area[y:y+h, x:x+w] = 1
-
-        cv2.imshow('filled_area', filled_area*255)
-        cv2.imshow('rgb_img', rgb_img)
-        cv2.waitKey(1)
-        
-
+    alpha = 0.3
+    overlay = rgb_img.copy()
+    # draw the border of the border of the contour
+    cv2.drawContours(overlay, [contour], 0, (0,0,255), 10)
+    rgb_img = cv2.addWeighted(overlay, alpha, rgb_img, 1 - alpha, 0)
     # save rgb_img
     cv2.imwrite('results/iran_map_with_text.png', rgb_img)
-    filled_area = (filled_area / 255 - 1)*-1
     cv2.imwrite('results/iran_map_filled_area.png', filled_area*255)
 
     
