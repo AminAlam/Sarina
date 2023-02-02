@@ -10,20 +10,31 @@ import random
 sys.path.append('./src/lib')
 lib_cpp_backend = ctypes.cdll.LoadLibrary('./src/lib/lib_cpp_backend.so')
 
-class CPP_backend(object):
+class CppBackend(object):
     def __init__(self):
-        self.obj = lib_cpp_backend.DetectOuterBorder_c()
+        self.obj = lib_cpp_backend.CppBackend_c()
+        self.get_fontscale_func = lib_cpp_backend.get_fontscale_func
 
-    def find_empty_loc(self, array1, array2):
-        border_x = np.empty_like(array1, dtype=np.uint16)
-        border_y = np.empty_like(array2, dtype=np.uint16)
-        func = lib_cpp_backend.DetectOuterBorder_func
-        func.argtypes = [ctypes.c_int, ctl.ndpointer(np.uint16, flags='aligned, c_contiguous'), 
-                        ctl.ndpointer(np.uint16, flags='aligned, c_contiguous'),  
-                        ctypes.c_int, ctl.ndpointer(np.uint16, flags='aligned, c_contiguous'),
-                        ctl.ndpointer(np.uint16, flags='aligned, c_contiguous')]
-        func(self.obj, array1, array2, array1.shape[0], border_x, border_y)
-        return border_x, border_y
+    def get_fontScale(self, filled_area, min_x, min_y, max_x, max_y, w, h, weight, fontScale_tmp, decay_rate):
+        x = 0
+        y = 0
+        filled_area = filled_area.astype(np.uint16)
+        print(filled_area.shape)
+        min_x = int(min_x)
+        min_y = int(min_y)
+        max_x = int(max_x)
+        max_y = int(max_y)
+        w = int(w)
+        h = int(h)
+        weight = float(weight)
+        fontScale_tmp = float(fontScale_tmp)
+        decay_rate = float(decay_rate)
+
+        self.get_fontscale_func.argtypes = [ctypes.c_int, ctl.ndpointer(np.uint16, flags='aligned, c_contiguous'), 
+                        ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_float, 
+                        ctypes.c_float,ctypes.c_float, ctypes.c_float, ctypes.c_float, ctypes.c_int, ctypes.c_int]
+        self.get_fontscale_func(self.obj, filled_area, min_x, min_y, max_x, max_y, w, h, weight, fontScale_tmp, decay_rate, x, y)
+        return fontScale_tmp, x, y
 
 
 def extract_text(file_path):
@@ -39,6 +50,7 @@ def extract_text(file_path):
 
 
 if __name__ == "__main__":
+    cpp_backend = CppBackend()
     txt_file = 'assets/texts/merged.txt'
     img_file = 'assets/images/Sarina-Esmailzadeh.jpeg'
     rgb_img = cv2.imread(img_file)
@@ -112,22 +124,23 @@ if __name__ == "__main__":
     max_weight = np.max(weights)
     # put text in txt_info in the contour center
     for txt in tqdm(txt_info):
-        fontScale_tmp = fontScale
         w, h, indx, txt, weight = txt
         # get a random point in the contour
+        # min_x, min_y, w, h, weight, fontScale_tmp, decay_rate
         counter = 0
-        while True:
-            x = random.randint(min_x+20, max_x-20)
-            y = random.randint(min_y+20, max_y-20)            
-            if filled_area[y-18:y+h+18, x-18:x+w+18].sum() == 0:
-                break            
-            if counter == 200:
-                fontScale_tmp = fontScale_tmp * decay_rate
-                # (w, h), _ = cv2.getTextSize(txt, font, int(fontScale_tmp*weight), thickness)
-                w = int(w * decay_rate**0.5)
-                h = int(h * decay_rate**0.5)
-                counter = 0
-            counter += 1
+        fontScale_tmp, x, y = cpp_backend.get_fontScale(filled_area, min_x, min_y, max_x, max_y, w, h, weight, fontScale, decay_rate)
+        # while True:
+        #     x = random.randint(min_x+20, max_x-20)
+        #     y = random.randint(min_y+20, max_y-20)            
+        #     if filled_area[y-18:y+h+18, x-18:x+w+18].sum() == 0:
+        #         break            
+        #     if counter == 200:
+        #         fontScale_tmp = fontScale_tmp * decay_rate
+        #         # (w, h), _ = cv2.getTextSize(txt, font, int(fontScale_tmp*weight), thickness)
+        #         w = int(w * decay_rate**0.5)
+        #         h = int(h * decay_rate**0.5)
+        #         counter = 0
+        #     counter += 1
 
         alpha = 0.5*(1+weight/max_weight)
         # put text in the image with alpha 0.5

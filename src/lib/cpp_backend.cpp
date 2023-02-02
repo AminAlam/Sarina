@@ -1,42 +1,60 @@
 #include <iostream>
 #include <cmath>
 
-class DetectOuterBorder{
+class CppBackend{
     public:
-        unsigned short int detect_border(const unsigned short int *x_coords, 
-                                        const unsigned short int *y_coords, 
-                                        const int length, 
-                                        unsigned short int *border_x, 
-                                        unsigned short int *border_y){
-
-            std::cout << "function 'detect_border' is called" << std::endl;
-            unsigned short int threshold = 10;
-            unsigned short int distance = 0;
-            for (int i = 0; i < length; i++){
-                border_x[i] = 0;
-                border_y[i] = 0;
-                distance = sqrt(pow(x_coords[i+1] - x_coords[i], 2) + pow(y_coords[i+1] - y_coords[i], 2));
-                if(distance < threshold){
-                    border_x[i] = x_coords[i];
-                    border_y[i] = y_coords[i];
-                }
-            }
-
+        unsigned short int get_fontscale(unsigned short int *filled_area[][],
+                                        const int min_x,
+                                        const int min_y,
+                                        const int max_x,
+                                        const int max_y,
+                                        const int w,
+                                        const int h,
+                                        const float weight,
+                                        float fontScale_tmp,
+                                        const float decay_rate,
+                                        int x,
+                                        int y){
             
-            return *border_x, *border_y;
+            while (1){
+                // x = random int between min_x and max_x
+                x = min_x + (rand() % (max_x - min_x + 1));
+                y = min_y + (rand() % (max_y - min_y + 1));
+                // sum of filled_area
+                int sum = 0;
+                for (int i = x; i < x+h; i++){
+                    for (int j = y; j < y+w; j++){
+                        unsigned short int tmp = filled_area[i][j];
+                        sum += tmp;
+                    };
+                };
+                if (sum == 0){
+                    break;
+                };
+            };
+            
+            
+            return 0;
         }
 };
 
 extern "C" {
-    DetectOuterBorder* DetectOuterBorder_c(){
-        return new DetectOuterBorder();
+    CppBackend* CppBackend_c(){
+        return new CppBackend();
     }
-    unsigned short int DetectOuterBorder_func(DetectOuterBorder* detectOuterBorder, 
-                                                const unsigned short int *x_coords, 
-                                                const unsigned short int *y_coords, 
-                                                const int length, 
-                                                unsigned short int *border_x, 
-                                                unsigned short int *border_y){ 
-        return detectOuterBorder->detect_border(x_coords, y_coords, length, border_x, border_y); 
+    unsigned short int get_fontscale_func(CppBackend* cppBackend, 
+                                                unsigned short int *filled_area[][], 
+                                                const int min_x,
+                                                const int min_y,
+                                                const int max_x,
+                                                const int max_y,
+                                                const int w,
+                                                const int h,
+                                                const float weight,
+                                                float fontScale_tmp,
+                                                const float decay_rate,
+                                                int x,
+                                                int y){ 
+        return cppBackend->get_fontscale(filled_area, min_x, min_y, max_x, max_y, w, h, weight, fontScale_tmp, decay_rate, x, y); 
     }
 };

@@ -78,7 +78,6 @@ Hamid|30
 Majid|50
 Hasti|60
 AmirArshad|40
-Jadi|50
 komar|40
 Siavash|40
 AmirJavad|30
