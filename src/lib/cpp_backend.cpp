@@ -5,7 +5,7 @@
 
 class CppBackend{
     public:
-        int * get_fontscale(const int min_x,
+        void get_fontscale(const int min_x,
                                         const int min_y,
                                         const int max_x,
                                         const int max_y,
@@ -17,10 +17,10 @@ class CppBackend{
                                         int* x,
                                         int* y,
                                         unsigned short int **filled_area){
-            int x_tmp;
-            int y_tmp;            
-            while (1){
-                
+                int x_tmp;
+                int y_tmp;            
+                while (1){
+                    
                 x_tmp = min_x + (rand() % (max_x - min_x + 1));
                 y_tmp = min_y + (rand() % (max_y - min_y + 1));
 
@@ -39,8 +39,6 @@ class CppBackend{
             *y = y_tmp;
 
             std::cout << *x << ' ' << *y << std::endl;
-            
-            return x, y;
         }
 };
 
@@ -48,19 +46,19 @@ extern "C" {
     CppBackend* CppBackend_c(){
         return new CppBackend();
     }
-     int * get_fontscale_func(CppBackend* cppBackend, 
-                                                const int min_x,
-                                                const int min_y,
-                                                const int max_x,
-                                                const int max_y,
-                                                const int w,
-                                                const int h,
-                                                const float weight,
-                                                float fontScale_tmp,
-                                                const float decay_rate,
-                                                int* x,
-                                                int* y,
-                                                unsigned short int **filled_area){
+     void get_fontscale_func(CppBackend* cppBackend, 
+                                            const int min_x,
+                                            const int min_y,
+                                            const int max_x,
+                                            const int max_y,
+                                            const int w,
+                                            const int h,
+                                            const float weight,
+                                            float fontScale_tmp,
+                                            const float decay_rate,
+                                            int* x,
+                                            int* y,
+                                            unsigned short int **filled_area){
         return cppBackend->get_fontscale(min_x, min_y, max_x, max_y, w, h, weight, fontScale_tmp, decay_rate, x, y, filled_area); 
     }
 };

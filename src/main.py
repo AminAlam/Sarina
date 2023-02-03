@@ -22,8 +22,6 @@ class CppBackend(object):
         min_y = int(min_y)
         max_x = int(max_x)
         max_y = int(max_y)
-        x = int(x)
-        y = int(y)
         w = int(w)
         h = int(h)
         weight = float(weight)
@@ -43,6 +41,8 @@ class CppBackend(object):
                         ct.c_int, ct.c_float, ct.c_float, ct.c_float, INTPtr, INTPtr,
                         UI16PtrPtr]
         self.get_fontscale_func(self.obj, min_x, min_y, max_x, max_y, w, h, weight, fontScale_tmp, decay_rate, ct_ptr_to_x, ct_ptr_to_y, ct_ptr_to_filled_area)
+        x = ct_ptr_to_x.contents.value
+        y = ct_ptr_to_y.contents.value
         print('x: ', x, 'y: ', y)
         return fontScale_tmp, x, y
 
