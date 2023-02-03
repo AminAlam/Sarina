@@ -1,14 +1,13 @@
-from traceback import print_tb
 import cv2 
 import numpy as np
 import numpy.ctypeslib as ctl
-import ctypes
+import ctypes as ct
 import sys
 from tqdm import tqdm
 import random
 
 sys.path.append('./src/lib')
-lib_cpp_backend = ctypes.cdll.LoadLibrary('./src/lib/lib_cpp_backend.so')
+lib_cpp_backend = ct.cdll.LoadLibrary('./src/lib/lib_cpp_backend.so')
 
 class CppBackend(object):
     def __init__(self):
@@ -19,21 +18,32 @@ class CppBackend(object):
         x = 0
         y = 0
         filled_area = filled_area.astype(np.uint16)
-        print(filled_area.shape)
         min_x = int(min_x)
         min_y = int(min_y)
         max_x = int(max_x)
         max_y = int(max_y)
+        x = int(x)
+        y = int(y)
         w = int(w)
         h = int(h)
         weight = float(weight)
         fontScale_tmp = float(fontScale_tmp)
         decay_rate = float(decay_rate)
 
-        self.get_fontscale_func.argtypes = [ctypes.c_int, ctl.ndpointer(np.uint16, flags='aligned, c_contiguous'), 
-                        ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_float, 
-                        ctypes.c_float,ctypes.c_float, ctypes.c_float, ctypes.c_float, ctypes.c_int, ctypes.c_int]
-        self.get_fontscale_func(self.obj, filled_area, min_x, min_y, max_x, max_y, w, h, weight, fontScale_tmp, decay_rate, x, y)
+        ct_arr = np.ctypeslib.as_ctypes(filled_area)
+        UI16Ptr = ct.POINTER(ct.c_uint16)
+        INTPtr = ct.POINTER(ct.c_int)
+        UI16PtrPtr = ct.POINTER(UI16Ptr)
+        UI16PtrArr = UI16Ptr * ct_arr._length_
+        ct_ptr_to_filled_area = ct.cast(UI16PtrArr(*(ct.cast(row, UI16Ptr) for row in ct_arr)), UI16PtrPtr)
+        ct_ptr_to_x = ct.cast(ct.pointer(ct.c_int(x)), INTPtr)
+        ct_ptr_to_y = ct.cast(ct.pointer(ct.c_int(y)), INTPtr)
+
+        self.get_fontscale_func.argtypes = [ct.c_int, ct.c_int, ct.c_int, ct.c_int, ct.c_int, ct.c_int, 
+                        ct.c_int, ct.c_float, ct.c_float, ct.c_float, INTPtr, INTPtr,
+                        UI16PtrPtr]
+        self.get_fontscale_func(self.obj, min_x, min_y, max_x, max_y, w, h, weight, fontScale_tmp, decay_rate, ct_ptr_to_x, ct_ptr_to_y, ct_ptr_to_filled_area)
+        print('x: ', x, 'y: ', y)
         return fontScale_tmp, x, y
 
 
@@ -52,7 +62,7 @@ def extract_text(file_path):
 if __name__ == "__main__":
     cpp_backend = CppBackend()
     txt_file = 'assets/texts/merged.txt'
-    img_file = 'assets/images/Sarina-Esmailzadeh.jpeg'
+    img_file = 'assets/images/Maryam.png'
     rgb_img = cv2.imread(img_file)
     original_img = rgb_img.copy()
     main_img = rgb_img.copy()
@@ -69,9 +79,9 @@ if __name__ == "__main__":
     # cv2.imshow('contours', rgb_img)
     # cv2.waitKey(0)
     # cv2.destroyAllWindows()
-    # merge contours 2 3 4
-    keep_contours = [2,3,4]
-    contour = np.concatenate((contours[2], contours[3], contours[4]), axis=0)
+
+    keep_contours = [0]
+    contour = np.concatenate((contours[0]), axis=0)
     
 
     # contour[:, :, 0] -= x_rect
@@ -107,11 +117,13 @@ if __name__ == "__main__":
     M = cv2.moments(contour)
     cx = int(M['m10']/M['m00'])
     cy = int(M['m01']/M['m00'])
-    min_x = contour[:, :, 0].min()
-    max_x = contour[:, :, 0].max()
-    min_y = contour[:, :, 1].min()
-    max_y = contour[:, :, 1].max()
+    min_x = contour[:, :].min()
+    max_x = contour[:, :].max()
+    min_y = contour[:, :].min()
+    max_y = contour[:, :].max()
     filled_area = rgb_img*0
+    # convert filled_area to gray
+    filled_area = cv2.cvtColor(filled_area, cv2.COLOR_BGR2GRAY)
     for contour_indx in keep_contours:
         contours[contour_indx] = contours[contour_indx] * resize_factor
         contours[contour_indx] = contours[contour_indx].astype(np.int32)

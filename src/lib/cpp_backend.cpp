@@ -1,10 +1,11 @@
 #include <iostream>
 #include <cmath>
+#include <vector>
+#include "ndarray.h"
 
 class CppBackend{
     public:
-        unsigned short int get_fontscale(unsigned short int *filled_area[][],
-                                        const int min_x,
+        int * get_fontscale(const int min_x,
                                         const int min_y,
                                         const int max_x,
                                         const int max_y,
@@ -13,28 +14,33 @@ class CppBackend{
                                         const float weight,
                                         float fontScale_tmp,
                                         const float decay_rate,
-                                        int x,
-                                        int y){
-            
+                                        int* x,
+                                        int* y,
+                                        unsigned short int **filled_area){
+            int x_tmp;
+            int y_tmp;            
             while (1){
-                // x = random int between min_x and max_x
-                x = min_x + (rand() % (max_x - min_x + 1));
-                y = min_y + (rand() % (max_y - min_y + 1));
-                // sum of filled_area
-                int sum = 0;
-                for (int i = x; i < x+h; i++){
-                    for (int j = y; j < y+w; j++){
-                        unsigned short int tmp = filled_area[i][j];
-                        sum += tmp;
+                
+                x_tmp = min_x + (rand() % (max_x - min_x + 1));
+                y_tmp = min_y + (rand() % (max_y - min_y + 1));
+
+                unsigned int sum = 0;
+                for (int i = x_tmp; i < x_tmp+h; i++){
+                    for (int j = y_tmp; j < y_tmp+w; j++){
+                        sum += filled_area[i][j];
                     };
                 };
                 if (sum == 0){
                     break;
                 };
             };
+
+            *x = x_tmp;
+            *y = y_tmp;
+
+            std::cout << *x << ' ' << *y << std::endl;
             
-            
-            return 0;
+            return x, y;
         }
 };
 
@@ -42,8 +48,7 @@ extern "C" {
     CppBackend* CppBackend_c(){
         return new CppBackend();
     }
-    unsigned short int get_fontscale_func(CppBackend* cppBackend, 
-                                                unsigned short int *filled_area[][], 
+     int * get_fontscale_func(CppBackend* cppBackend, 
                                                 const int min_x,
                                                 const int min_y,
                                                 const int max_x,
@@ -53,8 +58,9 @@ extern "C" {
                                                 const float weight,
                                                 float fontScale_tmp,
                                                 const float decay_rate,
-                                                int x,
-                                                int y){ 
-        return cppBackend->get_fontscale(filled_area, min_x, min_y, max_x, max_y, w, h, weight, fontScale_tmp, decay_rate, x, y); 
+                                                int* x,
+                                                int* y,
+                                                unsigned short int **filled_area){
+        return cppBackend->get_fontscale(min_x, min_y, max_x, max_y, w, h, weight, fontScale_tmp, decay_rate, x, y, filled_area); 
     }
 };
