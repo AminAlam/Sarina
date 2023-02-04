@@ -23,10 +23,10 @@ Sarina: An ASCII Art generator command line tool to create word clouds from text
 
 ----------
 ## Table of contents			
-   * [Introduction](https://github.com/AminAlam/Sarina#installation)
+   * [Introduction](https://github.com/AminAlam/Sarina#introduction)
    * [Installation](https://github.com/AminAlam/Sarina#installation)
    * [Usage](https://github.com/AminAlam/Sarina#usage)
-   * [How It Works](https://github.com/AminAlam/Sarina#mathematical-details)
+   * [How-It-Works](https://github.com/AminAlam/Sarina#how-it-works)
 
 ----------
 ## Introduction
