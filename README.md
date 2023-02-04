@@ -44,6 +44,9 @@ Sarina is an ASCII art generator written in Python3 and C++. It transforms an in
 ### Default image and words
 ```console
 Amin@Maximus:Sarina $ python3 src/Sarina.py 
+100%|███████████████████████████████████████████████████████████| 132/132 [01:09<00:00,  1.89it/s]
+Done!
+Images are saved in ./results
 ```
 <table border="0">
 <tr>
