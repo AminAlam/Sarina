@@ -164,7 +164,7 @@ def run(txt_file, img_file, contour_selection, contour_treshold, max_iter, decay
     overlay = just_text_img.copy()
     if plot_contour:
         for contour_indx in selected_contours:
-            cv2.drawContours(main_img, contours, contour_indx, (0, 0, 0), 10)
+            cv2.drawContours(main_img, contours, contour_indx, color_original, 10)
             cv2.drawContours(overlay, contours, contour_indx, (0, 0, 0), 10)
         just_text_img = cv2.addWeighted(overlay, alpha, just_text_img, 1 - alpha, 0)
             
