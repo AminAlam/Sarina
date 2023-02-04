@@ -16,7 +16,7 @@ import utils
 
 @click.command()
 @click.option('--txt_file', '-tf', default='assets/texts/heroes_of_iran.txt', help='Path to text file', type=click.Path(exists=True))
-@click.option('--img_file', '-if', default='assets/images/Sarina-Esmailzadeh.jpeg', help='Path to image file', type=click.Path(exists=True))
+@click.option('--img_file', '-if', default='assets/images/iran_map.png', help='Path to image file', type=click.Path(exists=True))
 @click.option('--contour_selection', '-cs', help='Contour selection', is_flag=True, default=False)
 @click.option('--contour_treshold', '-ct', default=100, help='Threshold value to detect the contours', type=click.IntRange(0, 255))
 @click.option('--max_iter', default=1000, help='Maximum number of iterations', type=click.IntRange(100, 10000))
@@ -50,6 +50,7 @@ def run(txt_file, img_file, contour_selection, contour_treshold, max_iter, decay
         keep_contours = [0]
         if len(contours)>1 and abs(cv2.contourArea(contours[0]) - w_img*h_img) < 0.01*w_img*h_img:
             keep_contours = [1]
+        remove_contours = []
     else:
         legend_h = 0
         for i in range(np.min([num_contours, 5])):
