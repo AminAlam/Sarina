@@ -12,45 +12,40 @@ class CppBackend{
                             int h,
                             int* x,
                             int* y,
-                            unsigned short int **filled_area,
+                            double **filled_area,
                             unsigned short int *status,
                             const int margin = 20,
                             const int max_iter = 500){
 
             // status: 0 -> success, 1 -> fail
             
-            int x_tmp;
-            int y_tmp;
+            int row_tmp;
+            int col_tmp;
             int counter = 0;            
-
             while (1){
-                    
-                y_tmp = min_x + (rand() % (max_x - min_x + 1));
-                x_tmp = min_y + (rand() % (max_y - min_y + 1));
-
-                // calculate the sum of filled_area[y_tmp-margin:y_tmp+margin+h, x_tmp-margin:x_tmp+margin+w] in a fast way
-
-                unsigned int sum = 0;
-                for (int i = y_tmp-margin; i < y_tmp+margin+h; i++){
+                col_tmp = min_x + (rand() % (max_x - min_x + 1));
+                row_tmp = min_y + (rand() % (max_y - min_y + 1));
+                double sum = 0;
+                for (int i = row_tmp-margin; i < row_tmp+margin+h; i++){
                     if (sum > 0) break;
-                    for (int j = x_tmp-margin; j < x_tmp+margin+w; j++){
+                    for (int j = col_tmp-margin; j < col_tmp+margin+w; j++){
                         sum += filled_area[i][j];
                         if (sum > 0) break;
                     };
                 };
                 if (sum == 0){
                     *status = 1;
-                    break;}                  
-                else if (counter > max_iter)
-                {
+                    break;
+                }                  
+                else if (counter > max_iter){
                     *status = 0;
                     break;
                 };
                 counter += 1;
             };
 
-            *x = x_tmp;
-            *y = y_tmp;
+            *x = col_tmp;
+            *y = row_tmp;
         };
 };
 
@@ -67,7 +62,7 @@ extern "C" {
                                             int h,
                                             int* x,
                                             int* y,
-                                            unsigned short int **filled_area,
+                                            double **filled_area,
                                             unsigned short int *status,
                                             const int margin = 20,
                                             const int max_iter = 500){
