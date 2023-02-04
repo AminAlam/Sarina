@@ -187,6 +187,8 @@ def run(txt_file, img_file, contour_selection, contour_treshold, max_iter, decay
     cv2.imwrite(f'{save_path}/just_text_reverse.png', just_text_img_reverse)
     cv2.imwrite(f'{save_path}/text_on_contour_reverse.png', text_on_contour_img_reverse)
 
+    print('Done!')
+    print(f'Images are saved in {save_path}')
 
 
 
