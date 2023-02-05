@@ -5,7 +5,6 @@
 <br/>
 <img src="https://img.shields.io/badge/Python-14354C?style=for-the-badge&logo=python&logoColor=white" alt="built with Python3" />
 <img src="https://img.shields.io/badge/C%2B%2B-00599C?style=for-the-badge&logo=c%2B%2B&logoColor=white" alt="built with C++" />
-<img src="https://img.shields.io/badge/Shell_Script-121011?style=for-the-badge&logo=gnu-bash&logoColor=white" alt="built with Shell" />
 
 </div>
 
@@ -23,27 +22,34 @@ Sarina: An ASCII Art generator command line tool to create word clouds from text
 
 ----------
 ## Table of contents			
-   * [Introduction](https://github.com/AminAlam/Sarina#introduction)
+   * [Introduction](https://github.com/AminAlam/Sarina#overview)
    * [Installation](https://github.com/AminAlam/Sarina#installation)
    * [Usage](https://github.com/AminAlam/Sarina#usage)
-   * [How-It-Works](https://github.com/AminAlam/Sarina#how-it-works)
+   * [How It Works](https://github.com/AminAlam/Sarina#how-it-works)
 
 ----------
-## Introduction
-Sarina is an ASCII art generator written in Python3 and C++. It transforms an input image and a text file containing words and their weights into a unique ASCII art representation. The algorithm behind Sarina is randomized, ensuring that every output is distinct, even for identical inputs.
+## Overview
+<p align="justify">
+ Sarina is an ASCII art generator written in Python3 and C++. It transforms an input image and a text file containing words and their weights into a unique ASCII art representation. The algorithm behind Sarina is randomized, ensuring that every output is distinct, even for identical inputs.
+</p>
+
 ----------
 ## Installation
 
+### PyPI
+- Check [Python Packaging User Guide](https://packaging.python.org/installing/)     
+- Run `pip install sarina-cli` or `pip3 install sarina-cli`
 
 ### Source code
 - Clone the repository or download the source code.
-- Run `pip install -r requirements.txt` or `pip3 install -r requirements.txt`
+- Run `pip3 install -r requirements.txt` or `pip install -r requirements.txt`
 
 ## Usage
 
 ### Default image and words
 ```console
-Amin@Maximus:Sarina $ python3 src/Sarina.py 
+Amin@Maximus:Sarina $ sarina
+Sarina is generating your word cloud...
 100%|███████████████████████████████████████████████████████████| 132/132 [01:09<00:00,  1.89it/s]
 Done!
 Images are saved in ./results
@@ -69,8 +75,9 @@ Images are saved in ./results
 
 ### Custom image and options
 ```console
-Amin@Maximus:Sarina $ python3 src/Sarina.py  -if 'assets/images/Sarina.png' -ct 100 -ft 20 -tc [255,255,255] -pc -cs
+Amin@Maximus:Sarina $ sarina  -if 'assets/images/Sarina.png' -ct 100 -ft 20 -tc [255,255,255] -pc -cs
 Enter the contour indices to keep (+) or to remove (-) (separated by space): +1 -2 -3 -4
+Sarina is generating your word cloud...
 100%|███████████████████████████████████████████████████████████| 132/132 [01:06<00:00,  1.98it/s]
 Done!
 Images are saved in ./results
@@ -99,8 +106,8 @@ Images are saved in ./results
 
 To learn more about the options, you can use the following command:
 ```console
-Amin@Maximus:Sarina $ python3 src/Sarina.py --help
-Usage: Sarina.py [OPTIONS]
+Amin@Maximus:Sarina $ sarina --help
+Usage: sarina [OPTIONS]
 
   Sarina: An ASCII Art Generator to create word clouds from text files based
   on image contours
