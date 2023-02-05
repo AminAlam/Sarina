@@ -5,36 +5,40 @@ from tqdm import tqdm
 import random 
 import click
 import os
+import pathlib
 
-sys.path.append('./src/cpp_backend')
-sys.path.append('./src/utils')
+file_dir = pathlib.Path(__file__).parent.absolute()
+sys.path.append(os.path.join(file_dir, 'cpp_backend'))
 
 import py2cpp as p2c
-import txt_parser
-import utils
 
+try:
+    from .parsers import parse_words
+except:
+    from parsers import parse_words
 
-@click.command()
-@click.option('--txt_file', '-tf', default='assets/texts/heroes_of_iran.txt', help='Path to text file', type=click.Path(exists=True))
-@click.option('--img_file', '-if', default='assets/images/Sarina-Esmailzadeh.jpeg', help='Path to image file', type=click.Path(exists=True))
-@click.option('--contour_selection', '-cs', help='Contour selection', is_flag=True, default=False)
-@click.option('--contour_treshold', '-ct', default=100, help='Threshold value to detect the contours', type=click.IntRange(0, 255))
-@click.option('--max_iter', default=1000, help='Maximum number of iterations', type=click.IntRange(100, 10000))
-@click.option('--decay_rate', default=0.9, help='Decay rate for font scale', type=click.FloatRange(0.1, 1.0))
-@click.option('--font_thickness', '-ft', default=10, help='Font thickness')
-@click.option('--margin', default=20, help='Margin between texts', type=click.IntRange(0, 100))
-@click.option('--text_color', '-tc', help='Text color', default='[0,0,0]', type=click.STRING, show_default=True)
-@click.option('--plot_contour', '-pc', help='Plot contour on the image', is_flag=True, default=False)
-@click.option('--opacity', '-op', help='If selected, opacity of each text will be selected based on its weight', is_flag=True, default=True)
-@click.option('--save_path', '-sp', default = None, help='Path to save the results', type=click.Path(exists=True))
-def run(txt_file, img_file, contour_selection, contour_treshold, max_iter, decay_rate, font_thickness, margin, text_color, plot_contour, opacity, save_path):
+@click.command(help='Sarina: An ASCII Art Generator to create word clouds from text files based on image contours')
+@click.option('--img_file', '-if', default=os.path.join('assets', 'images', 'iran_map.png'), type=click.Path(exists=True), help='Path to image file')
+@click.option('--txt_file', '-tf', default=os.path.join('assets', 'texts', 'heroes_of_iran.txt'), type=click.Path(exists=True), help='Path to text file. Each line of the text file should be in the following format: WORD|WEIGHT')
+@click.option('--contour_selection', '-cs', is_flag=True, default=False, show_default=True, help='Contour selection - if selected, user will be prompted to enter the contours index. For example, if you want to keep the contours with index 0, 3, 4, and remove contours with index 1, 2, you should enter +0 +3 +4 -1 -2')
+@click.option('--contour_treshold', '-ct', default=100, type=click.IntRange(0, 255), show_default=True, help='Threshold value to detect the contours. Sarina uses intensity thresholding to detect the contours. The higher the value, the more contours will be detected but the less accurate the result will be')
+@click.option('--max_iter', default=1000, type=click.IntRange(100, 10000), show_default=True, help='Maximum number of iterations. Higher number of iterations will result in more consistent results with the given texts and weights, but it will take more time to generate the result')
+@click.option('--decay_rate', default=0.9, type=click.FloatRange(0.1, 1.0), show_default=True, help='Decay rate for font scale. Higher decay rate will result in more consistent results with the given texts and weights, but it will take more time to generate the result')
+@click.option('--font_thickness', '-ft', default=10, show_default=True, help='Font thickness. Higher values will make the texts font thicker. Choose this value based on the size of the image')
+@click.option('--margin', default=20, type=click.IntRange(0, 100), show_default=True, help='Margin between texts in pixels. Higher values will result in more space between the texts')
+@click.option('--text_color', '-tc', default='[0,0,0]', type=click.STRING, show_default=True, help='Text color in RGB format. For example, [255,0,0] is red. Note to use square brackets and commas. Also, just enter the numbers, do not use spaces')
+@click.option('--plot_contour', '-pc', is_flag=True, default=False, show_default=True, help='Plot contour on the generated images. If selected, the generated images will be plotted with the detected/selected contours')
+@click.option('--opacity', '-op', is_flag=True, default=True, show_default=True, help='If selected, opacity of each text will be selected based on its weight')
+@click.option('--save_path', '-sp', default = None, type=click.Path(exists=True), help='Path to save the generated images. If not selected, the generated images will be saved in the same results folder in the directory as the function is called.')
+def main(txt_file, img_file, contour_selection, contour_treshold, max_iter, decay_rate, font_thickness, margin, text_color, plot_contour, opacity, save_path):
     rgb_img = cv2.imread(img_file)
     main_img = rgb_img.copy()
-    text, weights = txt_parser.parse_words(txt_file)
+    text, weights = parse_words(txt_file)
 
     w_img, h_img, _ = rgb_img.shape
 
     color_original = [int(c) for c in text_color[1:-1].split(',')]
+    color_original = [color_original[2], color_original[1], color_original[0]]
 
     gray_img = cv2.cvtColor(rgb_img, cv2.COLOR_BGR2GRAY)
     _, thresh = cv2.threshold(gray_img, contour_treshold, 255, cv2.THRESH_BINARY)
@@ -50,6 +54,8 @@ def run(txt_file, img_file, contour_selection, contour_treshold, max_iter, decay
         keep_contours = [0]
         if len(contours)>1 and abs(cv2.contourArea(contours[0]) - w_img*h_img) < 0.01*w_img*h_img:
             keep_contours = [1]
+        remove_contours = []
+        selected_contours = keep_contours
     else:
         legend_h = 0
         for i in range(np.min([num_contours, 5])):
@@ -68,6 +74,8 @@ def run(txt_file, img_file, contour_selection, contour_treshold, max_iter, decay
         keep_contours = [int(i[1:]) for i in selected_contours if i[0]=='+']
         remove_contours = [int(i[1:]) for i in selected_contours if i[0]=='-']
         selected_contours = [int(i[1:]) for i in selected_contours if i[0]=='-' or i[0]=='+']
+        
+    print('Sarina is generating your word cloud...')
 
     contour = np.concatenate(([contours[i] for i in keep_contours]), axis=0)
     
@@ -173,24 +181,27 @@ def run(txt_file, img_file, contour_selection, contour_treshold, max_iter, decay
     main_img = cv2.resize(main_img, (0, 0), fx=1/resize_factor, fy=1/resize_factor)
     # print current directory
     if save_path is None:
-        if os.path.isdir('./results') is False:
-            os.mkdir('./results')
-        save_path = './results'
+        home_dir = pathlib.Path.home()
+        save_path = os.path.join(home_dir, 'sarina_results')
+        if os.path.isdir(save_path) is False:
+            os.mkdir(save_path)
 
     just_text_img_reverse = (just_text_img*-1+255).astype(np.uint8)
     text_on_contour_img_reverse = (text_on_contour_img*-1+255).astype(np.uint8)
 
-    cv2.imwrite(f'{save_path}/just_text.png', just_text_img)
-    cv2.imwrite(f'{save_path}/text_on_contour.png', text_on_contour_img)
-    cv2.imwrite(f'{save_path}/text_on_main_image.png', main_img)
-    cv2.imwrite(f'{save_path}/just_text_reverse.png', just_text_img_reverse)
-    cv2.imwrite(f'{save_path}/text_on_contour_reverse.png', text_on_contour_img_reverse)
+    cv2.imwrite(os.path.join(save_path, 'just_text.png'), just_text_img)
+    cv2.imwrite(os.path.join(save_path, 'text_on_contour.png'), text_on_contour_img)
+    cv2.imwrite(os.path.join(save_path, 'text_on_main_image.png'), main_img)
+    cv2.imwrite(os.path.join(save_path, 'just_text_reverse.png'), just_text_img_reverse)
+    cv2.imwrite(os.path.join(save_path, 'text_on_contour_reverse.png'), text_on_contour_img_reverse)
 
+    print('Done!')
+    print(f'Images are saved in {save_path}')
 
 
 
 if __name__ == "__main__":
-    run()
+    main()
     
 
     
