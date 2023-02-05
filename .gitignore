@@ -4,3 +4,9 @@ venv
 __pycache__
 *.o
 results
+Sarina.egg-info
+build
+dist
+venv_test
+sarina_cli.egg-info/
+compile_cpp_dependencies.sh

@@ -5,18 +5,21 @@ from tqdm import tqdm
 import random 
 import click
 import os
+import pathlib
 
-sys.path.append('./src/cpp_backend')
-sys.path.append('./src/utils')
+file_dir = pathlib.Path(__file__).parent.absolute()
+sys.path.append(os.path.join(file_dir, 'cpp_backend'))
 
 import py2cpp as p2c
-import txt_parser
-import utils
 
+try:
+    from .parsers import parse_words
+except:
+    from parsers import parse_words
 
 @click.command(help='Sarina: An ASCII Art Generator to create word clouds from text files based on image contours')
-@click.option('--img_file', '-if', default='assets/images/iran_map.png', type=click.Path(exists=True), help='Path to image file')
-@click.option('--txt_file', '-tf', default='assets/texts/heroes_of_iran.txt', type=click.Path(exists=True), help='Path to text file. Each line of the text file should be in the following format: WORD|WEIGHT')
+@click.option('--img_file', '-if', default=os.path.join('assets', 'images', 'iran_map.png'), type=click.Path(exists=True), help='Path to image file')
+@click.option('--txt_file', '-tf', default=os.path.join('assets', 'texts', 'heroes_of_iran.txt'), type=click.Path(exists=True), help='Path to text file. Each line of the text file should be in the following format: WORD|WEIGHT')
 @click.option('--contour_selection', '-cs', is_flag=True, default=False, show_default=True, help='Contour selection - if selected, user will be prompted to enter the contours index. For example, if you want to keep the contours with index 0, 3, 4, and remove contours with index 1, 2, you should enter +0 +3 +4 -1 -2')
 @click.option('--contour_treshold', '-ct', default=100, type=click.IntRange(0, 255), show_default=True, help='Threshold value to detect the contours. Sarina uses intensity thresholding to detect the contours. The higher the value, the more contours will be detected but the less accurate the result will be')
 @click.option('--max_iter', default=1000, type=click.IntRange(100, 10000), show_default=True, help='Maximum number of iterations. Higher number of iterations will result in more consistent results with the given texts and weights, but it will take more time to generate the result')
@@ -27,10 +30,11 @@ import utils
 @click.option('--plot_contour', '-pc', is_flag=True, default=False, show_default=True, help='Plot contour on the generated images. If selected, the generated images will be plotted with the detected/selected contours')
 @click.option('--opacity', '-op', is_flag=True, default=True, show_default=True, help='If selected, opacity of each text will be selected based on its weight')
 @click.option('--save_path', '-sp', default = None, type=click.Path(exists=True), help='Path to save the generated images. If not selected, the generated images will be saved in the same results folder in the directory as the function is called.')
-def run(txt_file, img_file, contour_selection, contour_treshold, max_iter, decay_rate, font_thickness, margin, text_color, plot_contour, opacity, save_path):
+def main(txt_file, img_file, contour_selection, contour_treshold, max_iter, decay_rate, font_thickness, margin, text_color, plot_contour, opacity, save_path):
+    print('Sarina is generating your word cloud...')
     rgb_img = cv2.imread(img_file)
     main_img = rgb_img.copy()
-    text, weights = txt_parser.parse_words(txt_file)
+    text, weights = parse_words(txt_file)
 
     w_img, h_img, _ = rgb_img.shape
 
@@ -176,18 +180,19 @@ def run(txt_file, img_file, contour_selection, contour_treshold, max_iter, decay
     main_img = cv2.resize(main_img, (0, 0), fx=1/resize_factor, fy=1/resize_factor)
     # print current directory
     if save_path is None:
-        if os.path.isdir('./results') is False:
-            os.mkdir('./results')
-        save_path = './results'
+        home_dir = pathlib.Path.home()
+        save_path = os.path.join(home_dir, 'sarina_results')
+        if os.path.isdir(save_path) is False:
+            os.mkdir(save_path)
 
     just_text_img_reverse = (just_text_img*-1+255).astype(np.uint8)
     text_on_contour_img_reverse = (text_on_contour_img*-1+255).astype(np.uint8)
 
-    cv2.imwrite(f'{save_path}/just_text.png', just_text_img)
-    cv2.imwrite(f'{save_path}/text_on_contour.png', text_on_contour_img)
-    cv2.imwrite(f'{save_path}/text_on_main_image.png', main_img)
-    cv2.imwrite(f'{save_path}/just_text_reverse.png', just_text_img_reverse)
-    cv2.imwrite(f'{save_path}/text_on_contour_reverse.png', text_on_contour_img_reverse)
+    cv2.imwrite(os.path.join(save_path, 'just_text.png'), just_text_img)
+    cv2.imwrite(os.path.join(save_path, 'text_on_contour.png'), text_on_contour_img)
+    cv2.imwrite(os.path.join(save_path, 'text_on_main_image.png'), main_img)
+    cv2.imwrite(os.path.join(save_path, 'just_text_reverse.png'), just_text_img_reverse)
+    cv2.imwrite(os.path.join(save_path, 'text_on_contour_reverse.png'), text_on_contour_img_reverse)
 
     print('Done!')
     print(f'Images are saved in {save_path}')
@@ -195,7 +200,7 @@ def run(txt_file, img_file, contour_selection, contour_treshold, max_iter, decay
 
 
 if __name__ == "__main__":
-    run()
+    main()
     
 
     
