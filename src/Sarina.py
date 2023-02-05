@@ -52,6 +52,7 @@ def run(txt_file, img_file, contour_selection, contour_treshold, max_iter, decay
         if len(contours)>1 and abs(cv2.contourArea(contours[0]) - w_img*h_img) < 0.01*w_img*h_img:
             keep_contours = [1]
         remove_contours = []
+        selected_contours = keep_contours
     else:
         legend_h = 0
         for i in range(np.min([num_contours, 5])):
