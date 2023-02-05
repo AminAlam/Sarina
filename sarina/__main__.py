@@ -31,7 +31,6 @@ except:
 @click.option('--opacity', '-op', is_flag=True, default=True, show_default=True, help='If selected, opacity of each text will be selected based on its weight')
 @click.option('--save_path', '-sp', default = None, type=click.Path(exists=True), help='Path to save the generated images. If not selected, the generated images will be saved in the same results folder in the directory as the function is called.')
 def main(txt_file, img_file, contour_selection, contour_treshold, max_iter, decay_rate, font_thickness, margin, text_color, plot_contour, opacity, save_path):
-    print('Sarina is generating your word cloud...')
     rgb_img = cv2.imread(img_file)
     main_img = rgb_img.copy()
     text, weights = parse_words(txt_file)
@@ -75,6 +74,8 @@ def main(txt_file, img_file, contour_selection, contour_treshold, max_iter, deca
         keep_contours = [int(i[1:]) for i in selected_contours if i[0]=='+']
         remove_contours = [int(i[1:]) for i in selected_contours if i[0]=='-']
         selected_contours = [int(i[1:]) for i in selected_contours if i[0]=='-' or i[0]=='+']
+        
+    print('Sarina is generating your word cloud...')
 
     contour = np.concatenate(([contours[i] for i in keep_contours]), axis=0)
     
