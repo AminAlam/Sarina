@@ -5,7 +5,7 @@ import os
 import pathlib
 
 file_dir = pathlib.Path(__file__).parent.absolute()
-lib_cpp_backend = ct.cdll.LoadLibrary(os.path.join(file_dir, 'lib', 'lib_cpp_backend.so'))
+lib_cpp_backend = ct.cdll.LoadLibrary(os.path.join(file_dir, 'lib', 'libSarina.so'))
 
 class CppBackend(object):
     def __init__(self, min_x, min_y, max_x, max_y):
