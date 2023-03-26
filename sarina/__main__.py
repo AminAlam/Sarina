@@ -8,9 +8,12 @@ import os
 import pathlib
 
 file_dir = pathlib.Path(__file__).parent.absolute()
-sys.path.append(os.path.join(file_dir, 'cpp_backend'))
 
-import py2cpp as p2c
+try:
+    from .py2cpp import CppBackend
+except:
+    from py2cpp import CppBackend
+
 
 try:
     from .parsers import parse_words
@@ -18,8 +21,8 @@ except:
     from parsers import parse_words
 
 @click.command(help='Sarina: An ASCII Art Generator to create word clouds from text files based on image contours')
-@click.option('--img_file', '-if', default=os.path.join('assets', 'images', 'iran_map.png'), type=click.Path(exists=True), help='Path to image file')
-@click.option('--txt_file', '-tf', default=os.path.join('assets', 'texts', 'heroes_of_iran.txt'), type=click.Path(exists=True), help='Path to text file. Each line of the text file should be in the following format: WORD|WEIGHT')
+@click.option('--img_file', '-if', default=os.path.join(file_dir, 'assets', 'images', 'iran_map.png'), type=click.Path(exists=True), help='Path to image file')
+@click.option('--txt_file', '-tf', default=os.path.join(file_dir, 'assets', 'texts', 'heroes_of_iran.txt'), type=click.Path(exists=True), help='Path to text file. Each line of the text file should be in the following format: WORD|WEIGHT')
 @click.option('--contour_selection', '-cs', is_flag=True, default=False, show_default=True, help='Contour selection - if selected, user will be prompted to enter the contours index. For example, if you want to keep the contours with index 0, 3, 4, and remove contours with index 1, 2, you should enter +0 +3 +4 -1 -2')
 @click.option('--contour_treshold', '-ct', default=100, type=click.IntRange(0, 255), show_default=True, help='Threshold value to detect the contours. Sarina uses intensity thresholding to detect the contours. The higher the value, the more contours will be detected but the less accurate the result will be')
 @click.option('--max_iter', default=1000, type=click.IntRange(100, 10000), show_default=True, help='Maximum number of iterations. Higher number of iterations will result in more consistent results with the given texts and weights, but it will take more time to generate the result')
@@ -137,7 +140,7 @@ def main(txt_file, img_file, contour_selection, contour_treshold, max_iter, deca
     text_on_contour_img = filled_area.copy()
 
     max_weight = np.max(weights)
-    cpp_backend = p2c.CppBackend(min_x=min_x, min_y=min_y, max_x=max_x, max_y=max_y)
+    cpp_backend = CppBackend(min_x=min_x, min_y=min_y, max_x=max_x, max_y=max_y)
     
     for txt in tqdm(txt_info):
         w, h, indx, txt, weight = txt

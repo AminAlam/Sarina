@@ -1,0 +1,4 @@
+include requirements.txt
+include sarina/assets/images/*
+include sarina/assets/texts/*
+include sarina/*
