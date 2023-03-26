@@ -5,7 +5,19 @@ import os
 import pathlib
 
 file_dir = pathlib.Path(__file__).parent.absolute()
-lib_cpp_backend = ct.cdll.LoadLibrary(os.path.join(file_dir, 'lib', 'lib_cpp_backend.so'))
+
+for file in os.listdir(os.path.join(file_dir, 'lib')):
+    if 'cpp_backend.cpython' in file:
+        extension = file.split('.')[-1]
+        file_name = 'cpp_backend.' + extension
+        os.rename(os.path.join(file_dir, 'lib', file), os.path.join(file_dir, 'lib', file_name))
+
+if sys.platform == 'win32':
+    lib_cpp_backend = ct.cdll.LoadLibrary(os.path.join(file_dir, 'lib', 'cpp_backend.dll'))
+elif sys.platform == 'darwin':
+    lib_cpp_backend = ct.cdll.LoadLibrary(os.path.join(file_dir, 'lib', 'cpp_backend.so'))
+else:
+    lib_cpp_backend = ct.cdll.LoadLibrary(os.path.join(file_dir, 'lib', 'cpp_backend.so'))
 
 class CppBackend(object):
     def __init__(self, min_x, min_y, max_x, max_y):

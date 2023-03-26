@@ -1,7 +1,9 @@
+import os
 try:
     from setuptools import setup
 except ImportError:
     from distutils.core import setup
+from distutils.core import Extension
 
 MINIMAL_DESCRIPTION = '''Sarina is an ASCII art generator written in Python3 and C++. It transforms an input image and a text file containing words and their weights into a unique ASCII art representation. The algorithm behind Sarina is randomized, ensuring that every output is distinct, even for identical inputs.'''
 
@@ -21,9 +23,10 @@ def read_description():
         return MINIMAL_DESCRIPTION
     
 
+
 setup(
     name="sarina-cli",
-    version="0.0.0",
+    version="0.0.11",
     author='Amin Alam',
     description='ASCII Art Generator',
     long_description=read_description(),
@@ -39,6 +42,9 @@ setup(
             'sarina=sarina.__main__:main',
         ]
     },
+    # specify the name of the compiled extension as cpp_backend
+    ext_modules=[Extension('sarina.lib.cpp_backend', 
+                sources=[os.path.join('sarina', 'lib', 'cpp_backend.cpp')])],   
     packages=['sarina']
     )
 

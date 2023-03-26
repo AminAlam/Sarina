@@ -13,7 +13,7 @@ Sarina: An ASCII Art generator command line tool to create word clouds from text
 
 <table border="0">
  <tr>
-    <td>The program is dedicated to <a href="https://en.wikipedia.org/wiki/Death_of_Sarina_Esmailzadeh">Sarina Esmailzadeh</a>, a 16-year-old teenager who lost her life during the <a href="https://en.wikipedia.org/wiki/Mahsa_Amini_protests">Mahsa Amini protests</a> protests, as a result of violence inflicted by the IRGC forces. Her memory serves as a reminder of the importance of justice and human rights.
+    <td>The program is dedicated to <a href="https://en.wikipedia.org/wiki/Death_of_Sarina_Esmailzadeh">Sarina Esmailzadeh</a>, a 16-year-old teenager who lost her life during the <a href="https://en.wikipedia.org/wiki/Mahsa_Amini_protests">Mahsa Amini protests</a>, as a result of violence inflicted by the IRGC forces. Her memory serves as a reminder of the importance of justice and human rights.
 
 </td>
     <td><img src="https://github.com/AminAlam/Sarina/blob/dev/assets/images/Sarina.png" alt="Sarina Esmailzadeh" width=400 /></td>
