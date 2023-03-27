@@ -12,15 +12,10 @@ file_dir = pathlib.Path(__file__).parent.absolute()
 from py2cpp import CppBackend
 from parsers import parse_words
 
-
-
-def get_text_dimensions(text_string, font):
-    # https://stackoverflow.com/a/46220683/9263761
-    ascent, descent = font.getmetrics()
-
-    text_width = font.getmask(text_string).getbbox()[2]
-    text_height = font.getmask(text_string).getbbox()[3] + descent
-
+def get_text_dimensions(draw, text_string, font):
+    bbox = draw.textbbox((0, 0), text_string, font=font)
+    text_width = bbox[2] - bbox[0]
+    text_height = bbox[3] - bbox[1]
     return (text_width, text_height)
 
 @click.command(help='Sarina: An ASCII Art Generator to create word clouds from text files based on image contours')
@@ -91,9 +86,7 @@ def main(img_file, txt_file, font_file, contour_selection, contour_treshold, max
     just_text_img = (rgb_img*0+1)*255
     fontScale = 1
     max_iter_original = max_iter
-    thickness_original = font_thickness
     margin = np.min([margin, w_img//100, h_img//100])
-
 
     txt_info = []
 
@@ -105,17 +98,15 @@ def main(img_file, txt_file, font_file, contour_selection, contour_treshold, max
     weights = [30 + 170 * (weight - min_weight) / (max_weight - min_weight) for weight in weights]
     max_weight = max(weights)
     min_weight = min(weights)
-
+    draw = ImageDraw.Draw(Image.fromarray(just_text_img))
     S_total_txt = 0
     for indx, txt in enumerate(text):
         weight = weights[indx]
-        # thickness = 1+int(thickness_original*(max_weight/weight)**0.5)
-        # (w, h), _ = cv2.getTextSize(txt, font, int(1+fontScale*weights[indx]), thickness)
         font = ImageFont.truetype(font_file, int(1+fontScale*weights[indx]))
-        (w, h) = get_text_dimensions(txt, font)
+        (w, h) = get_text_dimensions(draw, txt, font)
         S_total_txt += w * h
         txt_info.append([w, h, indx, txt, weights[indx]])
-    print(S_contour, S_total_txt)
+
     txt_info.sort(key=lambda x: x[-1], reverse=True)
     C_ratio = S_contour / S_total_txt
     
@@ -124,6 +115,7 @@ def main(img_file, txt_file, font_file, contour_selection, contour_treshold, max
     contour = contour.astype(np.int32)
     just_text_img = cv2.resize(just_text_img, (0, 0), fx=resize_factor, fy=resize_factor)
     main_img = cv2.resize(main_img, (0, 0), fx=resize_factor, fy=resize_factor)
+    main_img = Image.fromarray(main_img)
 
     min_x = np.min(contour[:, 0, 0])
     min_y = np.min(contour[:, 0, 1])
@@ -133,6 +125,7 @@ def main(img_file, txt_file, font_file, contour_selection, contour_treshold, max
 
     filled_area = just_text_img*0
     filled_area = cv2.cvtColor(filled_area, cv2.COLOR_BGR2GRAY)
+
     for contour_indx in keep_contours:
         contours[contour_indx] = contours[contour_indx] * resize_factor
         contours[contour_indx] = contours[contour_indx].astype(np.int32)
@@ -145,30 +138,28 @@ def main(img_file, txt_file, font_file, contour_selection, contour_treshold, max
     filled_area = (filled_area / 255 - 1)*-1
     filled_area = filled_area*255
     text_on_contour_img = filled_area.copy()
-
-    filled_area = np.array(filled_area, dtype=np.uint8)
+    text_on_contour_img = Image.fromarray(text_on_contour_img)
 
     max_weight = np.max(weights)
     cpp_backend = CppBackend(min_x=min_x, min_y=min_y, max_x=max_x, max_y=max_y)
     
+    main_img_img_draw_interface = ImageDraw.Draw(main_img)
+    text_on_contour_img_img_draw_interface = ImageDraw.Draw(text_on_contour_img)
+
     for txt in tqdm(txt_info):
         w, h, indx, txt, weight = txt
         max_iter = int(max_iter_original*(max_weight/weight)**0.5)
-        thickness = 1+int(thickness_original/(max_weight/weight)**0.5)
         fontScale_tmp = fontScale
         while True:
             x, y, status = cpp_backend.get_fontScale(filled_area, w, h, max_iter, margin)
-            print(w, h, txt, status, x, y)
             if status:
                 font = ImageFont.truetype(font_file, int(fontScale_tmp*weight))
-                (w, h) = get_text_dimensions(txt, font)
-                # (w, h), _ = cv2.getTextSize(txt, font, fontScale_tmp*weight, thickness)
+                (w, h) = get_text_dimensions(draw, txt, font)
                 break
             else:
                 fontScale_tmp = fontScale_tmp * decay_rate
                 font = ImageFont.truetype(font_file, int(fontScale_tmp*weight))
-                (w, h) = get_text_dimensions(txt, font)
-                # (w, h), _ = cv2.getTextSize(txt, font, fontScale_tmp*weight, thickness)
+                (w, h) = get_text_dimensions(draw, txt, font)
         if opacity:
             alpha = 0.5*(1+weight/max_weight)
         else:
@@ -180,30 +171,24 @@ def main(img_file, txt_file, font_file, contour_selection, contour_treshold, max
         font = ImageFont.truetype(font_file, int(fontScale_tmp*weight))
 
         img_draw_interface = ImageDraw.Draw(Image.fromarray(overlay))
-        img_draw_interface.text((x, y+h), txt, font=font, fill=color)
+        img_draw_interface.text((x, y), txt, font=font, fill=color)
 
-        # cv2.putText(overlay, txt, (x, y+h), font, fontScale_tmp*weight, color, thickness, cv2.LINE_AA)
+        overlay = Image.fromarray(overlay)
+        img_draw_interface = ImageDraw.Draw(overlay)
+        img_draw_interface.text((x, y), txt, font=font, fill=color)
+        overlay = np.array(overlay, dtype=np.uint8)
+
         just_text_img = cv2.addWeighted(overlay, alpha, just_text_img, 1 - alpha, 0)
 
         color = int(alpha*255)
-        img_draw_interface = ImageDraw.Draw(Image.fromarray(text_on_contour_img))
-        img_draw_interface.text((x, y+h), txt, font=font, fill=color)
+        text_on_contour_img_img_draw_interface.text((x, y), txt, font=font, fill=color)
+        main_img_img_draw_interface.text((x, y), txt, font=font, fill=color_original)
 
-        # cv2.putText(text_on_contour_img, txt, (x, y+h), font, fontScale_tmp*weight, color, thickness, cv2.LINE_AA)
-        img_draw_interface = ImageDraw.Draw(Image.fromarray(main_img))
-        img_draw_interface.text((x, y+h), txt, font=font, fill=color_original)
-        filled_area = Image.fromarray(filled_area)
+        filled_area = filled_area.astype(np.float32)
+        filled_area = Image.fromarray(filled_area, mode='F')
         img_draw_interface = ImageDraw.Draw(filled_area)
-        img_draw_interface.text((x, y+h), txt, font=font, fill=255)
-        filled_area = np.array(filled_area, dtype=np.uint8)
-
-        cv2.imshow('filled_area', filled_area)
-        cv2.waitKey(0)
-
-        # cv2.putText(main_img, txt, (x, y+h), font, fontScale_tmp*weight, color_original, thickness, cv2.LINE_AA)
-
-
-        # cv2.putText(filled_area, txt, (x, y+h), font, fontScale_tmp*weight, [255, 255, 255], thickness, cv2.LINE_AA)
+        img_draw_interface.text((x, y), txt, font=font, fill=255)
+        filled_area = np.array(filled_area, dtype=np.float64)
 
     alpha = 0.3
     overlay = just_text_img.copy()
@@ -214,7 +199,7 @@ def main(img_file, txt_file, font_file, contour_selection, contour_treshold, max
         just_text_img = cv2.addWeighted(overlay, alpha, just_text_img, 1 - alpha, 0)
             
 
-
+    main_img = np.array(main_img, dtype=np.uint8)
     main_img = cv2.resize(main_img, (0, 0), fx=1/resize_factor, fy=1/resize_factor)
     if save_path is None:
         home_dir = pathlib.Path.home()
@@ -222,8 +207,12 @@ def main(img_file, txt_file, font_file, contour_selection, contour_treshold, max
         if os.path.isdir(save_path) is False:
             os.mkdir(save_path)
 
+    just_text_img = np.array(just_text_img, dtype=np.uint8)
     just_text_img_reverse = (just_text_img*-1+255).astype(np.uint8)
+    text_on_contour_img = np.array(text_on_contour_img, dtype=np.uint8)
     text_on_contour_img_reverse = (text_on_contour_img*-1+255).astype(np.uint8)
+    text_on_contour_img = np.array(text_on_contour_img, dtype=np.uint8)
+
 
     cv2.imwrite(os.path.join(save_path, 'just_text.png'), just_text_img)
     cv2.imwrite(os.path.join(save_path, 'text_on_contour.png'), text_on_contour_img)
