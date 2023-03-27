@@ -92,7 +92,7 @@ Images are saved in ./results
 <td> Generated Output </td>
 </tr>
  <tr>
-    <td><img src="https://github.com/AminAlam/Sarina/blob/dev/assets/sarina/images/Sarina.png" width=400 /></td>
+    <td><img src="https://github.com/AminAlam/Sarina/blob/dev/sarina/assets/images/Sarina.png" width=400 /></td>
     <td><img src="https://github.com/AminAlam/Sarina/blob/dev/other_files/sarina/just_text.png" width=400 /></td>
     <td><img src="https://github.com/AminAlam/Sarina/blob/dev/other_files/sarina/just_text_reverse.png" width=400 /></td>
     <td><img src="https://github.com/AminAlam/Sarina/blob/dev/other_files/sarina/text_on_contour.png" width=400 /></td>
