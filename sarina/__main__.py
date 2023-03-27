@@ -9,16 +9,8 @@ import pathlib
 
 file_dir = pathlib.Path(__file__).parent.absolute()
 
-try:
-    from .py2cpp import CppBackend
-except:
-    from py2cpp import CppBackend
-
-
-try:
-    from .parsers import parse_words
-except:
-    from parsers import parse_words
+from py2cpp import CppBackend
+from parsers import parse_words
 
 @click.command(help='Sarina: An ASCII Art Generator to create word clouds from text files based on image contours')
 @click.option('--img_file', '-if', default=os.path.join(file_dir, 'assets', 'images', 'iran_map.png'), type=click.Path(exists=True), help='Path to image file')
