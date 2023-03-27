@@ -26,7 +26,7 @@ def read_description():
 
 setup(
     name="sarina-cli",
-    version="0.0.11",
+    version="0.0.21",
     author='Amin Alam',
     description='ASCII Art Generator',
     long_description=read_description(),
