@@ -9,8 +9,13 @@ import pathlib
 from PIL import Image, ImageDraw, ImageFont
 file_dir = pathlib.Path(__file__).parent.absolute()
 
-from py2cpp import CppBackend
-from parsers import parse_words
+
+try:
+    from .parsers import parse_words
+    from .py2cpp import CppBackend
+except:
+    from parsers import parse_words
+    from py2cpp import CppBackend
 
 def get_text_dimensions(draw, text_string, font):
     bbox = draw.textbbox((0, 0), text_string, font=font)
@@ -212,7 +217,6 @@ def main(img_file, txt_file, font_file, contour_selection, contour_treshold, max
     text_on_contour_img = np.array(text_on_contour_img, dtype=np.uint8)
     text_on_contour_img_reverse = (text_on_contour_img*-1+255).astype(np.uint8)
     text_on_contour_img = np.array(text_on_contour_img, dtype=np.uint8)
-
 
     cv2.imwrite(os.path.join(save_path, 'just_text.png'), just_text_img)
     cv2.imwrite(os.path.join(save_path, 'text_on_contour.png'), text_on_contour_img)
