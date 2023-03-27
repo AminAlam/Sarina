@@ -16,7 +16,7 @@ Sarina: An ASCII Art generator command line tool to create word clouds from text
     <td>The program is dedicated to <a href="https://en.wikipedia.org/wiki/Death_of_Sarina_Esmailzadeh">Sarina Esmailzadeh</a>, a 16-year-old teenager who lost her life during the <a href="https://en.wikipedia.org/wiki/Mahsa_Amini_protests">Mahsa Amini protests</a>, as a result of violence inflicted by the IRGC forces. Her memory serves as a reminder of the importance of justice and human rights.
 
 </td>
-    <td><img src="https://github.com/AminAlam/Sarina/blob/dev/assets/images/Sarina.png" alt="Sarina Esmailzadeh" width=400 /></td>
+    <td><img src="https://github.com/AminAlam/Sarina/blob/dev/sarina/assets/images/Sarina.png" alt="Sarina Esmailzadeh" width=400 /></td>
  </tr>
 </table>
 
@@ -64,7 +64,7 @@ Images are saved in ./results
 <td> Generated Output </td>
 </tr>
  <tr>
-    <td><img src="https://github.com/AminAlam/Sarina/blob/dev/assets/images/iran_map.png" width=400 /></td>
+    <td><img src="https://github.com/AminAlam/Sarina/blob/dev/sarina/assets/images/iran_map.png" width=400 /></td>
     <td><img src="https://github.com/AminAlam/Sarina/blob/dev/other_files/iran_map/just_text.png" width=400 /></td>
     <td><img src="https://github.com/AminAlam/Sarina/blob/dev/other_files/iran_map/just_text_reverse.png" width=400 /></td>
     <td><img src="https://github.com/AminAlam/Sarina/blob/dev/other_files/iran_map/text_on_contour.png" width=400 /></td>
@@ -92,7 +92,7 @@ Images are saved in ./results
 <td> Generated Output </td>
 </tr>
  <tr>
-    <td><img src="https://github.com/AminAlam/Sarina/blob/dev/assets/images/Sarina.png" width=400 /></td>
+    <td><img src="https://github.com/AminAlam/Sarina/blob/dev/assets/sarina/images/Sarina.png" width=400 /></td>
     <td><img src="https://github.com/AminAlam/Sarina/blob/dev/other_files/sarina/just_text.png" width=400 /></td>
     <td><img src="https://github.com/AminAlam/Sarina/blob/dev/other_files/sarina/just_text_reverse.png" width=400 /></td>
     <td><img src="https://github.com/AminAlam/Sarina/blob/dev/other_files/sarina/text_on_contour.png" width=400 /></td>
